@@ -83,8 +83,11 @@ projects.forEach(p => {
 modules.forEach(m => {
     sidebarPages.push({
         file: m.file + '.html',
+        num: m.num,
+        title: m.title,
         label: `Module ${m.num}: ${m.title}`,
         type: 'module',
+        isProject: false,
         id: m.id
     });
     // Insert projects that come after this module
@@ -92,8 +95,11 @@ modules.forEach(m => {
         projectsByAfterModule[m.id].forEach(p => {
             sidebarPages.push({
                 file: p.file + '.html',
+                num: p.num,
+                title: p.title,
                 label: `Project ${p.num}: ${p.title}`,
                 type: 'project',
+                isProject: true,
                 id: p.id
             });
         });
