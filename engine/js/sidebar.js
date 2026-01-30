@@ -89,7 +89,8 @@
         `;
 
         // All pages - with sections nested under active page
-        pages.forEach(page => {
+        // Skip feature items (DP, FC, WC) — already rendered above
+        pages.filter(page => page.type !== 'feature').forEach(page => {
             const isActive = currentPage === page.file;
             const linkClass = page.isProject ? 'sidebar-link sidebar-project-link' : 'sidebar-link';
 
