@@ -185,6 +185,24 @@ Put your skills to work! Build a CLI that interacts with the GitHub API.
 
 Start Project →
 
+## Exercises
+
+Progress through each section in order, or jump to where you need practice.
+
+Practice individual concepts you just learned.
+
+<div id="warmups-container">
+            <noscript><p class="js-required">JavaScript is required for the interactive exercises.</p></noscript>
+            </div>
+
+### 💪 Challenges
+
+Combine concepts and learn patterns. Each challenge has multiple variants at different difficulties.
+
+<div id="challenges-container">
+            <noscript><p class="js-required">JavaScript is required for the interactive exercises.</p></noscript>
+            </div>
+
 ## Module 11 Summary
 
 - **http.Get/Post** — simple requests

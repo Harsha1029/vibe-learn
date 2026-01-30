@@ -219,6 +219,24 @@ import "myproject/a"  // B imports A — ERROR!
 - Extract shared types into a third package both can import
 - Use interfaces to break the dependency
 
+## Exercises
+
+Progress through each section in order, or jump to where you need practice.
+
+Practice individual concepts you just learned.
+
+<div id="warmups-container">
+            <noscript><p class="js-required">JavaScript is required for the interactive exercises.</p></noscript>
+            </div>
+
+### 💪 Challenges
+
+Combine concepts and learn patterns. Each challenge has multiple variants at different difficulties.
+
+<div id="challenges-container">
+            <noscript><p class="js-required">JavaScript is required for the interactive exercises.</p></noscript>
+            </div>
+
 ## Module 13 Summary
 
 - **Same package, multiple files** — share everything, no imports needed

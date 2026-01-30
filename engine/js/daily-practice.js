@@ -11,7 +11,7 @@
     var MODULE_NAMES = (window.CourseConfigHelper && window.CourseConfigHelper.moduleNames) || {};
 
     // Modules that have no variant data files — exercises from these can never render
-    var MODULES_WITHOUT_VARIANTS = (window.CourseConfigHelper && window.CourseConfigHelper.modulesWithoutExercises) || new Set([7, 8, 11, 13]);
+    var MODULES_WITHOUT_VARIANTS = new Set((window.CourseConfigHelper && window.CourseConfigHelper.modulesWithoutExercises) || [7, 8, 11, 13]);
 
     // Modules that DO have variant data — used by Discover mode
     var MODULES_WITH_VARIANTS = (window.CourseConfigHelper && window.CourseConfigHelper.modulesWithExercises) || [1, 2, 3, 4, 5, 6, 9, 10, 12, 14, 15, 16, 17];
