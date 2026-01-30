@@ -464,13 +464,67 @@
         });
     }
 
+    function createShuffleBtn(id, color) {
+        var btn = document.createElement('button');
+        btn.id = id;
+        btn.textContent = '🎲 Shuffle';
+        btn.style.cssText = 'background:var(--bg-card);color:var(--' + color + ');border:1px solid var(--' + color + ');padding:0.2rem 0.7rem;border-radius:4px;font-size:0.75rem;font-family:"JetBrains Mono",monospace;cursor:pointer;transition:all 0.2s;font-weight:400;';
+        btn.addEventListener('mouseenter', function() {
+            btn.style.background = 'var(--' + color + ')';
+            btn.style.color = color === 'green-bright' ? 'var(--bg-dark)' : 'white';
+        });
+        btn.addEventListener('mouseleave', function() {
+            btn.style.background = 'var(--bg-card)';
+            btn.style.color = 'var(--' + color + ')';
+        });
+        return btn;
+    }
+
+    function setupShuffleWarmupsBtn() {
+        if (document.getElementById('shuffle-warmups-btn')) return;
+        var container = document.getElementById('warmups-container');
+        if (!container || !variantsData || !variantsData.warmups || variantsData.warmups.length === 0) return;
+
+        var header = document.createElement('h3');
+        header.style.cssText = 'display:flex;align-items:center;gap:0.75rem;';
+        header.textContent = '🔥 Warmups';
+
+        var btn = createShuffleBtn('shuffle-warmups-btn', 'green-bright');
+        btn.addEventListener('click', function() { shuffleWarmups(); });
+        header.appendChild(btn);
+
+        container.parentNode.insertBefore(header, container);
+    }
+
+    function setupShuffleChallengesBtn() {
+        if (document.getElementById('shuffle-challenges-btn')) return;
+        var container = document.getElementById('challenges-container');
+        if (!container || !variantsData || !variantsData.challenges || variantsData.challenges.length === 0) return;
+
+        var btn = createShuffleBtn('shuffle-challenges-btn', 'orange');
+        btn.addEventListener('click', function() { shuffleChallenges(); });
+
+        // Append to existing challenges heading if present
+        var heading = document.getElementById('challenges');
+        if (heading && heading.tagName === 'H3') {
+            heading.style.display = 'flex';
+            heading.style.alignItems = 'center';
+            heading.style.gap = '0.75rem';
+            heading.appendChild(btn);
+        } else {
+            container.parentNode.insertBefore(btn, container);
+        }
+    }
+
     function loadVariants() {
         variantsData = window.variantsDataEmbedded;
         setupWarmupConceptFilter();  // Setup warmup filter
+        setupShuffleWarmupsBtn();
         shuffleWarmups();
         // Setup filters in reverse order (they insert before container, so last becomes first)
         setupConceptFilter();        // Will be 2nd (pattern filter)
         setupDifficultyModeSelector();  // Will be 1st (difficulty mode)
+        setupShuffleChallengesBtn();
         shuffleChallenges();
     }
 
@@ -874,7 +928,7 @@
             btn.style.color = 'var(--bg-dark)';
             btn.style.borderColor = 'var(--green-bright)';
             setTimeout(() => {
-                btn.textContent = '🎲 Shuffle Challenges';
+                btn.textContent = '🎲 Shuffle';
                 btn.style.background = 'var(--bg-card)';
                 btn.style.color = 'var(--orange)';
                 btn.style.borderColor = 'var(--orange)';

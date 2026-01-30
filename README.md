@@ -266,6 +266,10 @@ The build script (`build.js`) does:
 
 Everything runs client-side. Progress, streaks, SRS scheduling — all in localStorage. No server, no database, no accounts.
 
+## Contributing
+
+Since I haven't audited the code, I will most likely not accept pull requests unless it's something simple (typo fix, small bug fix, etc). Nothing personal — I just can't review code I don't fully understand myself.
+
 ## Disclaimer
 
 This is a fun experiment, not production software. The AI probably introduced bugs, bad patterns, or subtle issues I haven't noticed because I haven't read the code. If you learn something from the course content, great. If you find something broken, that's the vibe-coding experience.
