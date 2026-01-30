@@ -17,8 +17,8 @@ courses/my-course/
 ├── course.json              # Course manifest
 └── content/
     ├── lessons/             # Markdown files (one per module)
-    ├── exercises/           # Exercise variant JSON files
-    ├── flashcards/          # flashcards.json
+    ├── exercises/           # Exercise variant YAML files
+    ├── flashcards/          # flashcards.yaml
     └── assets/              # favicon, images, etc.
 ```
 
@@ -68,7 +68,7 @@ The file name must match the `file` field in course.json. The build script conve
 
 ## Step 4: Add Exercises
 
-Create `content/exercises/moduleN-variants.json` for each module that has exercises. Set `hasExercises: true` in course.json for those modules.
+Create `content/exercises/moduleN-variants.yaml` for each module that has exercises. Set `hasExercises: true` in course.json for those modules.
 
 Don't forget to add the exercise containers to your lesson markdown:
 
@@ -88,14 +88,13 @@ Don't forget to add the exercise containers to your lesson markdown:
 
 ## Step 5: Add Flashcards
 
-Create `content/flashcards/flashcards.json`:
+Create `content/flashcards/flashcards.yaml`:
 
-```json
-{
-  "1": [
-    { "topic": "Basics", "q": "What is X?", "a": "X is Y." }
-  ]
-}
+```yaml
+"1":
+  - topic: Basics
+    q: What is X?
+    a: X is Y.
 ```
 
 Keys are module IDs as strings.
@@ -121,6 +120,6 @@ Push to GitHub and enable GitHub Pages with Actions, or serve the `dist/` direct
 - Create the directory structure under `courses/`
 - Define your course in `course.json`
 - Write lessons in markdown
-- Add exercises as JSON variant files
-- Add flashcards as a single JSON file
+- Add exercises as YAML variant files
+- Add flashcards as a single YAML file
 - Build with `npm run build` and deploy the `dist/` directory

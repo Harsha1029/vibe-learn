@@ -3,10 +3,10 @@
  * Course Engine Build Script (Multi-Course)
  *
  * Reads course manifests from courses/<slug>/course.json + content files
- * (markdown lessons, JSON exercises, JSON flashcards) + shared engine
+ * (markdown lessons, YAML exercises, YAML flashcards) + shared engine
  * templates, and produces complete static sites in dist/<slug>/.
  *
- * Only dependency: marked (for markdown → HTML)
+ * Dependencies: marked (markdown → HTML), js-yaml (YAML parsing)
  *
  * Usage:
  *   node build.js          # Build all courses + landing page
@@ -19,6 +19,7 @@ const path = require('path');
 const { marked } = require('marked');
 const { markedHighlight } = require('marked-highlight');
 const hljs = require('highlight.js');
+const yaml = require('js-yaml');
 
 // ---------------------------------------------------------------------------
 // Paths
@@ -486,27 +487,28 @@ function buildCourse(slug) {
     fs.writeFileSync(path.join(COURSE_DIST, 'analytics.html'), analyticsPage);
     console.log('  analytics.html');
 
-    // 12. Compile exercise JSON → JS
+    // 12. Compile exercise YAML → JS
     console.log('Compiling exercise data...');
     const exerciseFiles = fs.existsSync(EXERCISES_DIR)
-        ? fs.readdirSync(EXERCISES_DIR).filter(f => f.match(/^module\d+-variants\.json$/))
+        ? fs.readdirSync(EXERCISES_DIR).filter(f => f.match(/^module\d+-variants\.yaml$/))
         : [];
 
-    exerciseFiles.forEach(jsonFile => {
-        const jsonPath = path.join(EXERCISES_DIR, jsonFile);
-        const jsFile = jsonFile.replace('.json', '.js');
-        const data = fs.readFileSync(jsonPath, 'utf8');
+    exerciseFiles.forEach(yamlFile => {
+        const yamlPath = path.join(EXERCISES_DIR, yamlFile);
+        const raw = fs.readFileSync(yamlPath, 'utf8');
+        const moduleNum = yamlFile.match(/module(\d+)/)[1];
+        const jsFile = `module${moduleNum}-variants.js`;
 
+        let parsed;
         try {
-            JSON.parse(data);
+            parsed = yaml.load(raw) || {};
         } catch (e) {
-            console.error(`  Invalid JSON in ${jsonFile}:`, e.message);
+            console.error(`  Invalid YAML in ${yamlFile}:`, e.message);
             process.exit(1);
         }
 
-        const moduleNum = jsonFile.match(/module(\d+)/)[1];
-
-        const js = `// Auto-generated from ${jsonFile} - do not edit directly\nwindow.moduleData = ${data};\nwindow.moduleDataRegistry = window.moduleDataRegistry || {};\nwindow.moduleDataRegistry[${moduleNum}] = window.moduleData;\n`;
+        const jsonStr = JSON.stringify(parsed);
+        const js = `// Auto-generated from ${yamlFile} - do not edit directly\nwindow.moduleData = ${jsonStr};\nwindow.moduleDataRegistry = window.moduleDataRegistry || {};\nwindow.moduleDataRegistry[${moduleNum}] = window.moduleData;\n`;
 
         fs.writeFileSync(path.join(COURSE_DIST, 'data', jsFile), js);
         console.log(`  data/${jsFile}`);
@@ -514,22 +516,23 @@ function buildCourse(slug) {
 
     // 13. Generate flashcard-data.js
     console.log('Generating flashcard-data.js...');
-    const flashcardJsonPath = path.join(FLASHCARDS_DIR, 'flashcards.json');
-    if (fs.existsSync(flashcardJsonPath)) {
-        const flashcardData = fs.readFileSync(flashcardJsonPath, 'utf8');
+    const flashcardYamlPath = path.join(FLASHCARDS_DIR, 'flashcards.yaml');
+    if (fs.existsSync(flashcardYamlPath)) {
+        const flashcardRaw = fs.readFileSync(flashcardYamlPath, 'utf8');
+        let flashcardParsed;
         try {
-            JSON.parse(flashcardData);
+            flashcardParsed = yaml.load(flashcardRaw) || {};
         } catch (e) {
-            console.error('  Invalid JSON in flashcards.json:', e.message);
+            console.error('  Invalid YAML in flashcards.yaml:', e.message);
             process.exit(1);
         }
         fs.writeFileSync(
             path.join(COURSE_DIST, 'flashcard-data.js'),
-            `// Auto-generated from flashcards.json - do not edit directly\nwindow.FlashcardData = ${flashcardData};\n`
+            `// Auto-generated from flashcards.yaml - do not edit directly\nwindow.FlashcardData = ${JSON.stringify(flashcardParsed)};\n`
         );
         console.log('  flashcard-data.js');
     } else {
-        console.warn('  Warning: flashcards.json not found, skipping flashcard-data.js');
+        console.warn('  Warning: flashcards.yaml not found, skipping flashcard-data.js');
     }
 
     // 14. Copy engine JS files

@@ -1,17 +1,12 @@
 ## Flashcard Decks
 
-Flashcards are defined in `content/flashcards/flashcards.json`. The file is a JSON object where keys are module IDs (as strings) and values are arrays of cards.
+Flashcards are defined in `content/flashcards/flashcards.yaml`. The file is a YAML document where keys are module IDs (as strings) and values are arrays of cards.
 
-```json
-{
-  "1": [
-    {
-      "topic": "Topic Name",
-      "q": "The question shown on the front of the card.",
-      "a": "The answer revealed when the card is flipped."
-    }
-  ]
-}
+```yaml
+"1":
+  - topic: Topic Name
+    q: The question shown on the front of the card.
+    a: The answer revealed when the card is flipped.
 ```
 
 Users access flashcards from the sidebar or dashboard. They can study by module or shuffle across all modules.
@@ -65,7 +60,7 @@ All data stays in the browser:
 
 ## Module 3 Summary
 
-- Flashcards are defined in a **single JSON file** grouped by module
+- Flashcards are defined in a **single YAML file** grouped by module
 - Users **flip and rate** cards, feeding the SRS system
 - SRS uses **SM-2** to schedule reviews at optimal intervals
 - **Streak tracking** and an **activity heatmap** motivate daily practice
