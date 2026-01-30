@@ -207,10 +207,13 @@
             updateThemeLabel(select.value, label);
         });
 
+        const isLandingPage = !!document.querySelector('.landing');
         const actions = document.createElement('div');
         actions.className = 'theme-actions';
 
-        createShowTimerToggle(actions);
+        if (!isLandingPage) {
+            createShowTimerToggle(actions);
+        }
 
         wrapper.appendChild(label);
         wrapper.appendChild(select);
@@ -218,7 +221,9 @@
             wrapper.appendChild(actions);
         }
         document.body.appendChild(wrapper);
-        createFocusToggleFallback();
+        if (!isLandingPage) {
+            createFocusToggleFallback();
+        }
     }
 
     function updateThemeLabel(value, labelEl) {

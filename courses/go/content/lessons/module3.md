@@ -85,7 +85,7 @@ c.Increment()
 fmt.Println(c.Value())  // 1
 ```
 
-> **Rule:** <p>If any method needs a pointer receiver, make ALL methods use pointer receivers for consistency.</p>
+> **Rule:** If any method needs a pointer receiver, make ALL methods use pointer receivers for consistency.
 
 ## Struct Embedding (Composition)
 
@@ -121,7 +121,7 @@ fmt.Println(e.Name)     // "Alice" - promoted from Person
 fmt.Println(e.Greet())  // "Hi, I'm Alice" - method promoted
 ```
 
-> **Composition over Inheritance:** <p>This is more flexible than inheritance. You can embed multiple types and override methods.</p>
+> **Composition over Inheritance:** This is more flexible than inheritance. You can embed multiple types and override methods.
 
 ## Struct Tags
 

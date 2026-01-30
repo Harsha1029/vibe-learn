@@ -60,7 +60,7 @@ server := NewServer("localhost",
 )
 ```
 
-> **Why This Rules:** <p>Add new options without breaking existing code. Clear defaults. Self-documenting API.</p>
+> **Why This Rules:** Add new options without breaking existing code. Clear defaults. Self-documenting API.
 
 ## Factory Pattern
 

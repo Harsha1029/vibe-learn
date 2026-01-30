@@ -145,7 +145,7 @@ func main() {
 }
 ```
 
-> **Security:** <p>Never pass user input directly to shell commands. Use exec.Command with separate args, not bash -c with string interpolation.</p>
+> **Security:** Never pass user input directly to shell commands. Use exec.Command with separate args, not bash -c with string interpolation.
 
 ## Environment Variables
 

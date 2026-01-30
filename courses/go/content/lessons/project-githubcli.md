@@ -47,4 +47,4 @@ $ gh user golang
 └─────────────────────────────────────┘
 ```
 
-> **Skills Used:** <p>HTTP clients, JSON decoding, Cobra CLI, environment variables for API tokens, lipgloss styling.</p>
+> **Skills Used:** HTTP clients, JSON decoding, Cobra CLI, environment variables for API tokens, lipgloss styling.

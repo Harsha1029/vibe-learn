@@ -96,7 +96,7 @@ func main() {
 }
 ```
 
-> **Import Path:** <p>The import path is your module name (from go.mod) + the directory path. Not the file path. Not the package name. The directory.</p>
+> **Import Path:** The import path is your module name (from go.mod) + the directory path. Not the file path. Not the package name. The directory.
 
 ## Uppercase = Exported (Public)
 
@@ -151,7 +151,7 @@ myproject/
 
 If someone else imports your module, they **cannot** import anything from your internal/ directory. Compiler stops them.
 
-> **When to use internal/:** <p>Put implementation details you don't want to be part of your public API. You can refactor internal code freely without breaking anyone.</p>
+> **When to use internal/:** Put implementation details you don't want to be part of your public API. You can refactor internal code freely without breaking anyone.
 
 ## Common Project Layouts
 

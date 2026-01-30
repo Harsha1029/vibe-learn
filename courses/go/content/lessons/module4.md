@@ -26,7 +26,7 @@ MakeSound(Dog{"Rex"})  // Woof!
 MakeSound(Cat{"Whiskers"})  // Meow!
 ```
 
-> **The Magic:** <p>Dog and Cat never mention Speaker. They just have the right method. Go figures it out.</p>
+> **The Magic:** Dog and Cat never mention Speaker. They just have the right method. Go figures it out.
 
 ## Common Standard Library Interfaces
 
@@ -78,7 +78,7 @@ data := map[string]any{
 }
 ```
 
-> **Use Sparingly:** <p>`any` loses type safety. Prefer specific interfaces when possible.</p>
+> **Use Sparingly:** `any` loses type safety. Prefer specific interfaces when possible.
 
 ## Type Assertions & Type Switches
 

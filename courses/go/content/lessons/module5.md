@@ -24,7 +24,7 @@ slice[0] = 999
 fmt.Println(original)  // [1 999 3 4 5] — modified!
 ```
 
-> **Gotcha:** <p>Slicing creates a view, not a copy. Modifying the slice modifies the original!</p>
+> **Gotcha:** Slicing creates a view, not a copy. Modifying the slice modifies the original!
 
 ### Common Slice Operations
 
@@ -85,7 +85,7 @@ for k := range m {
 }
 ```
 
-> **Map Iteration:** <p>Map iteration order is random by design. If you need ordered keys, sort them separately.</p>
+> **Map Iteration:** Map iteration order is random by design. If you need ordered keys, sort them separately.
 
 ## Building a Set
 

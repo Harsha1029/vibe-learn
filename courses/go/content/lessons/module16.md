@@ -146,7 +146,7 @@ $ go test -v
     --- PASS: TestAdd/mixed (0.00s)
 ```
 
-> **Why t.Run()?:** <p>Subtests with `t.Run()` let you run individual cases: `go test -run TestAdd/negative`. Also makes failure output clearer.</p>
+> **Why t.Run()?:** Subtests with `t.Run()` let you run individual cases: `go test -run TestAdd/negative`. Also makes failure output clearer.
 
 ## Testing Errors
 
@@ -413,7 +413,7 @@ github.com/you/pkg/math.go:9:    Divide      75.0%
 total:                           (statements) 80.0%
 ```
 
-> **Coverage isn't everything:** <p>100% coverage doesn't mean bug-free. Test behavior, not lines. Focus on edge cases and error paths.</p>
+> **Coverage isn't everything:** 100% coverage doesn't mean bug-free. Test behavior, not lines. Focus on edge cases and error paths.
 
 ## Exercises
 

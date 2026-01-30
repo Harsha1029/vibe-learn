@@ -22,7 +22,7 @@ func main() {
 - **import "fmt"** — Import formatting package
 - **func main()** — Entry point function
 
-> **Run it:** <p>Save as `main.go`, run with `go run main.go`</p>
+> **Run it:** Save as `main.go`, run with `go run main.go`
 
 ## Variables & Types
 
@@ -51,7 +51,7 @@ height := 5.9
 isCool := true
 ```
 
-> **Gotcha:** <p>`:=` only works inside functions. At package level, use `var`.</p>
+> **Gotcha:** `:=` only works inside functions. At package level, use `var`.
 
 ### Common Types
 
@@ -67,7 +67,7 @@ byte     // alias for uint8
 rune     // alias for int32 (Unicode code point)
 ```
 
-> **Zero Values:** <p>Uninitialized variables get zero values: `""` for string, `0` for numbers, `false` for bool.</p>
+> **Zero Values:** Uninitialized variables get zero values: `""` for string, `0` for numbers, `false` for bool.
 
 ## Functions
 
@@ -237,13 +237,15 @@ if "dave" in ages:
     print(f"Found: {ages['dave']}")
 ```
 
-> **Remember the order!:** <p>**First variable** = the value you're looking for
-
-                **Second variable** = boolean (did we find it?)
-
-                Pattern: `value, found := map[key]`
-
-                You can name them anything, but `ok` is conventional for the boolean.</p>
+> **Remember the order!:**
+>
+> **First variable** = the value you're looking for
+>
+> **Second variable** = boolean (did we find it?)
+>
+> Pattern: `value, found := map[key]`
+>
+> You can name them anything, but `ok` is conventional for the boolean.
 
 ## Exercises
 
@@ -263,21 +265,21 @@ Combine concepts and learn algorithmic patterns. Each challenge has multiple var
             <noscript><p class="js-required">JavaScript is required for the interactive exercises.</p></noscript>
             </div>
 
-> **Learning Path:** <p>**Warmups** → master basic syntax with quick drills (6 concepts, ~79 variants)
-
-                **Challenges** → 14 exercises with 180 variants across easy/medium/hard difficulties
-
-                **Progressive difficulty:**
-
-                • Use the "Get Easier Version" button if a challenge feels too hard
-
-                • Use the "Get Harder Version" button to progressively challenge yourself
-
-                • Filter by pattern/concept to focus on specific algorithmic techniques
-
-                • Shuffle to practice with fresh variants!
-
-                Stuck? Check the tactical hints - they show you the code step by step!</p>
+> **Learning Path:** **Warmups** → master basic syntax with quick drills (6 concepts, ~79 variants)
+>
+> **Challenges** → 14 exercises with 180 variants across easy/medium/hard difficulties
+>
+> **Progressive difficulty:**
+>
+> • Use the "Get Easier Version" button if a challenge feels too hard
+>
+> • Use the "Get Harder Version" button to progressively challenge yourself
+>
+> • Filter by pattern/concept to focus on specific algorithmic techniques
+>
+> • Shuffle to practice with fresh variants!
+>
+> Stuck? Check the tactical hints - they show you the code step by step!
 
 ## Module 1 Summary
 

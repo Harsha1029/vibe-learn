@@ -26,7 +26,7 @@ func doWork(name string) {
 }
 ```
 
-> **Don't use time.Sleep!:** <p>Use proper synchronization (channels, WaitGroup). Sleep is just for demos.</p>
+> **Don't use time.Sleep!:** Use proper synchronization (channels, WaitGroup). Sleep is just for demos.
 
 ## Channels: Goroutine Communication
 
@@ -236,4 +236,4 @@ Combine concepts and learn patterns. Each challenge has multiple variants at dif
 - **context** — cancellation and timeouts
 - **Worker pool** — bounded parallelism
 
-> **The Go Proverb:** <p>"Don't communicate by sharing memory; share memory by communicating." — Use channels, not mutexes.</p>
+> **The Go Proverb:** "Don't communicate by sharing memory; share memory by communicating." -- Use channels, not mutexes.

@@ -22,7 +22,7 @@ if err != nil {
 fmt.Println(result)
 ```
 
-> **The Mantra:** <p>Check errors immediately. Don't defer it. Don't ignore it with `_`.</p>
+> **The Mantra:** Check errors immediately. Don't defer it. Don't ignore it with `_`.
 
 ## Custom Error Types
 

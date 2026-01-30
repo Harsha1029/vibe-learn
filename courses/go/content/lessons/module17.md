@@ -248,7 +248,7 @@ $ go test -tags=integration ./...
 $ go test -tags=integration -run Integration ./...
 ```
 
-> **CI Strategy:** <p>Run unit tests on every commit. Run integration tests on PR merge or nightly. Keep your feedback loop fast.</p>
+> **CI Strategy:** Run unit tests on every commit. Run integration tests on PR merge or nightly. Keep your feedback loop fast.
 
 ## Testing with Environment Variables
 
@@ -333,7 +333,7 @@ func TestGetUser(t *testing.T) {
 }
 ```
 
-> **TestMain Gotcha:** <p>If you define `TestMain`, you MUST call `m.Run()` or no tests will execute. Don't forget `os.Exit(code)` at the end.</p>
+> **TestMain Gotcha:** If you define `TestMain`, you MUST call `m.Run()` or no tests will execute. Don't forget `os.Exit(code)` at the end.
 
 ## Testing External Services
 
@@ -407,7 +407,7 @@ func TestParallelSubtests(t *testing.T) {
 }
 ```
 
-> **When NOT to parallelize:** <p>Don't use `t.Parallel()` if tests share state, write to same files, or use shared database rows. Race conditions will ruin your day.</p>
+> **When NOT to parallelize:** Don't use `t.Parallel()` if tests share state, write to same files, or use shared database rows. Race conditions will ruin your day.
 
 ## Golden Files
 

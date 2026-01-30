@@ -78,7 +78,7 @@ func (s Set[T]) ToSlice() []T {
 }
 ```
 
-> **Why struct{} instead of bool?:** <p>`map[string]bool` works but wastes 1 byte per entry. `map[string]struct{}` uses zero extra bytes. For large sets, this adds up.</p>
+> **Why struct{} instead of bool?:** `map[string]bool` works but wastes 1 byte per entry. `map[string]struct{}` uses zero extra bytes. For large sets, this adds up.
 
 ## Set Operations
 

@@ -53,7 +53,7 @@ Use blockquotes with a bold label to create callout boxes:
 
 > **Tip:** This is a callout block. Use them for important notes, warnings, or tips. The bold label at the start sets the tone.
 
-> **Warning:** <p>You can also use HTML inside callouts for richer formatting, like paragraph tags or code examples.</p>
+> **Warning:** Callouts support the full range of Markdown formatting, including bold, italic, code, and links.
 
 ## Tables
 

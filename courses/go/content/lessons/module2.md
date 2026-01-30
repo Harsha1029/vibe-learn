@@ -47,9 +47,9 @@ fmt.Println(*p) // 42 (the actual value)
 fmt.Println(x)  // 100 — x changed!
 ```
 
-> **Memory Trick:** <p>`&` = "get **A**ddress" (& looks like 'A')
-
-                `*` = "get value" (go *****through the pointer)</p>
+> **Memory Trick:** `&` = "get **A**ddress" (& looks like 'A')
+>
+> `*` = "get value" (go *****through the pointer)
 
 ## How Python Handles This
 
@@ -184,7 +184,7 @@ NewServer(Config{Timeout: &customTimeout})
 NewServer(Config{})  // Uses defaults
 ```
 
-> **nil Panic:** <p>Dereferencing a nil pointer causes a panic (crash). Always check `!= nil` before using `*p`.</p>
+> **nil Panic:** Dereferencing a nil pointer causes a panic (crash). Always check `!= nil` before using `*p`.
 
 ## Pointer Receivers on Methods
 
@@ -224,7 +224,7 @@ func main() {
 - Pointer receivers for: mutation, large structs, consistency
 - Value receivers for: small immutable types, when you want a copy
 
-> **Go Does Some Magic:** <p>You can call pointer methods on values and vice versa — Go automatically converts. But be consistent anyway.</p>
+> **Go Does Some Magic:** You can call pointer methods on values and vice versa -- Go automatically converts. But be consistent anyway.
 
 ## Creating Pointers: new() and &
 
@@ -263,7 +263,7 @@ m := make(map[string]int)       // Initialized map
 ch := make(chan int, 5)         // Buffered channel
 ```
 
-> **Rule:** <p>`new()` = zero value + pointer. `make()` = initialized slice/map/channel (no pointer).</p>
+> **Rule:** `new()` = zero value + pointer. `make()` = initialized slice/map/channel (no pointer).
 
 ## Common Pointer Mistakes
 
@@ -345,4 +345,4 @@ Combine concepts and learn patterns. Each challenge has multiple variants at dif
 - **new()** = zero value pointer, **make()** = initialized slice/map/channel
 - **Go handles memory** — you don't free things manually
 
-> **The Mantra:** <p>When in doubt, start without pointers. Add them when you need mutation or have large data.</p>
+> **The Mantra:** When in doubt, start without pointers. Add them when you need mutation or have large data.

@@ -206,7 +206,7 @@ func run() error {
 // 2 = misuse of command
 ```
 
-> **Pattern:** <p>Keep main() thin. Put logic in run() that returns errors. Easier to test!</p>
+> **Pattern:** Keep main() thin. Put logic in run() that returns errors. Easier to test!
 
 ## Exercises
 

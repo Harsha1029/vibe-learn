@@ -68,4 +68,4 @@ tasks:
     description: Clean build artifacts
 ```
 
-> **Skills Used:** <p>YAML parsing, file I/O, exec.Command, dependency graphs, CLI design.</p>
+> **Skills Used:** YAML parsing, file I/O, exec.Command, dependency graphs, CLI design.

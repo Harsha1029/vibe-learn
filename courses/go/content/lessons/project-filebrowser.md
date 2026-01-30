@@ -42,4 +42,4 @@ func loadDir(path string) tea.Cmd {
 }
 ```
 
-> **Skills Used:** <p>Bubble Tea architecture, lipgloss styling, file system operations, keyboard handling.</p>
+> **Skills Used:** Bubble Tea architecture, lipgloss styling, file system operations, keyboard handling.

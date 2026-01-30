@@ -192,4 +192,4 @@ go install honnef.co/go/tools/cmd/staticcheck@latest
 go install mvdan.cc/gofumpt@latest
 ```
 
-> **Format on save:** <p>Enable auto-formatting in your editor. Running `gofmt` or `goimports` on save prevents most style-related issues.</p>
+> **Format on save:** Enable auto-formatting in your editor. Running `gofmt` or `goimports` on save prevents most style-related issues.
