@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="vibe-learn — pick a course and start learning">
+    <meta name="description" content="vibe-learn — a self-hosted, static course platform with exercises, flashcards, spaced repetition, and 10 themes.">
     <title>vibe-learn</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,39 +12,93 @@
     <link rel="stylesheet" href="style.css">
 {{THEME_LINKS}}
     <style>
-        .landing-header {
+        /* --- Landing layout --- */
+        .landing { max-width: 860px; margin: 0 auto; padding: 2rem; }
+
+        /* --- Hero --- */
+        .hero {
             text-align: center;
-            padding: 3rem 0 2rem;
+            padding: 4rem 0 1rem;
         }
-        .landing-header .tag {
+        .hero-brand {
             font-family: 'JetBrains Mono', monospace;
-            color: var(--green-bright);
-            font-size: 0.85rem;
-            letter-spacing: 0.1em;
+            font-size: 0.8rem;
+            letter-spacing: 0.15em;
             text-transform: uppercase;
+            color: var(--green-bright);
+            margin-bottom: 1rem;
         }
-        .landing-header h1 {
-            font-size: 2.5rem;
-            margin: 0.5rem 0;
+        .hero h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+            margin-bottom: 1rem;
         }
-        .landing-header p {
+        .hero h1 .accent { color: var(--green-bright); }
+        .hero-sub {
             color: var(--text-dim);
             font-size: 1.1rem;
+            line-height: 1.6;
+            max-width: 540px;
+            margin: 0 auto;
+        }
+
+        /* --- Feature grid --- */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 3rem 0;
+        }
+        .feature {
+            background: var(--bg-card);
+            padding: 1.25rem 1.5rem;
+        }
+        .feature-icon {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--green-bright);
+            letter-spacing: 0.05em;
+            margin-bottom: 0.4rem;
+        }
+        .feature-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+        .feature-desc {
+            color: var(--text-dim);
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        /* --- Courses section --- */
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--green-bright);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
         }
         .course-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
+            gap: 1rem;
         }
         .course-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 2rem;
+            border-radius: 10px;
+            padding: 1.75rem;
             text-decoration: none;
             color: inherit;
-            transition: border-color 0.2s, transform 0.2s;
+            transition: border-color 0.2s, transform 0.15s;
             display: flex;
             flex-direction: column;
         }
@@ -53,39 +107,118 @@
             transform: translateY(-2px);
         }
         .course-card .course-name {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
         .course-card .course-desc {
             color: var(--text-dim);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             line-height: 1.6;
             flex: 1;
         }
         .course-card .course-status {
             margin-top: 0.75rem;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--orange);
         }
         .course-card .course-meta {
-            margin-top: 1rem;
+            margin-top: 0.75rem;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--green-dim);
+        }
+
+        /* --- Footer --- */
+        .landing-footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.82rem;
+            line-height: 1.8;
+        }
+        .landing-footer a {
+            color: var(--green-dim);
+            text-decoration: none;
+        }
+        .landing-footer a:hover { color: var(--green-bright); }
+        .landing-footer .vibe-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            opacity: 0.6;
+            margin-top: 0.5rem;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 680px) {
+            .hero h1 { font-size: 2rem; }
+            .features { grid-template-columns: 1fr; }
+        }
+        @media (min-width: 681px) and (max-width: 860px) {
+            .features { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="landing-header">
-            <div class="tag">// vibe-learn</div>
-            <h1>Pick a Course</h1>
-            <p>Choose a course to start learning</p>
+    <div class="landing">
+        <!-- Hero -->
+        <div class="hero">
+            <div class="hero-brand">// vibe-learn</div>
+            <h1>Self-hosted<br><span class="accent">course platform</span></h1>
+            <p class="hero-sub">
+                Fork it, add your content, deploy. Markdown lessons, interactive exercises,
+                flashcards with spaced repetition, streak tracking, 10 themes &mdash; zero backend.
+            </p>
         </div>
+
+        <!-- Features -->
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">&gt;_</div>
+                <div class="feature-title">Markdown lessons</div>
+                <div class="feature-desc">Write content in markdown with syntax-highlighted code blocks and side-by-side comparisons.</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">[&thinsp;]</div>
+                <div class="feature-title">Interactive exercises</div>
+                <div class="feature-desc">Warmups and challenges with multiple variants, hints, solutions, and self-rating.</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">SRS</div>
+                <div class="feature-title">Spaced repetition</div>
+                <div class="feature-desc">Exercises and flashcards scheduled by an SRS algorithm. Daily practice pulls from weak and due items.</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">FC</div>
+                <div class="feature-title">Flashcards</div>
+                <div class="feature-desc">Flip-and-rate flashcard sessions grouped by module. SRS-tracked per card.</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">10x</div>
+                <div class="feature-title">10 themes</div>
+                <div class="feature-desc">Gruvbox, Solarized, Everforest, OLED, Persona 5, Factorio, and more. Light and dark.</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">0 deps</div>
+                <div class="feature-title">Pure static site</div>
+                <div class="feature-desc">No server, no database, no accounts. All progress in localStorage. Offline via service worker.</div>
+            </div>
+        </div>
+
+        <!-- Courses -->
+        <div class="section-label">// courses</div>
         <div class="course-grid">
 {{COURSE_CARDS}}
+        </div>
+
+        <!-- Footer -->
+        <div class="landing-footer">
+            <a href="https://github.com/jmilne22/vibe-learn">GitHub</a>
+            <div class="vibe-tag">100% vibe-coded. The entire platform was generated by AI.</div>
         </div>
     </div>
     <script src="theme.js"></script>
