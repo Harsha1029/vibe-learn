@@ -30,7 +30,19 @@
 
     const themeGroups = [
         {
-            label: 'Default',
+            label: 'Factorio',
+            options: [
+                { value: 'factorio-dark', label: 'Dark' }
+            ]
+        },
+        {
+            label: 'Persona 5',
+            options: [
+                { value: 'persona5-dark', label: 'Dark' }
+            ]
+        },
+        {
+            label: 'Classic',
             options: [
                 { value: 'dark', label: 'Dark' },
                 { value: 'oled-dark', label: 'OLED' },
@@ -57,18 +69,6 @@
                 { value: 'everforest-dark', label: 'Dark' },
                 { value: 'everforest-light', label: 'Light' }
             ]
-        },
-        {
-            label: 'Persona 5',
-            options: [
-                { value: 'persona5-dark', label: 'Dark' }
-            ]
-        },
-        {
-            label: 'Factorio',
-            options: [
-                { value: 'factorio-dark', label: 'Dark' }
-            ]
         }
     ];
 
@@ -91,8 +91,8 @@
         if (saved && validThemes.has(saved)) {
             return saved;
         }
-        // Default to dark mode (the original theme)
-        return 'dark';
+        // Default to Factorio
+        return 'factorio-dark';
     }
 
     // Apply theme to document
