@@ -270,7 +270,7 @@ Everything runs client-side. Progress, streaks, SRS scheduling — all in localS
 
 ## Contributing
 
-Since I haven't audited the code, I will most likely not accept pull requests unless it's something simple (typo fix, small bug fix, etc). Nothing personal — I just can't review code I don't fully understand myself.
+Since I haven't audited the code, I will most likely not accept pull requests unless it's something simple (typo fix, small bug fix, etc). Nothing personal — I just can't review code I don't fully understand myself. You're welcome to fork it and make a billion dollars though.
 
 ## Disclaimer
 
