@@ -480,6 +480,78 @@
 }
 
 /* --- Staggered entrance animations --- */
+/* --- Landing page --- */
+[data-theme="persona5-dark"] .landing .hero-brand {
+    color: var(--red);
+    letter-spacing: 0.2em;
+}
+[data-theme="persona5-dark"] .landing .hero h1 {
+    font-family: 'Bebas Neue', 'Archivo Black', sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 3.5rem;
+}
+[data-theme="persona5-dark"] .landing .hero h1 .accent {
+    color: var(--red);
+}
+[data-theme="persona5-dark"] .landing .features {
+    border: 2px solid var(--red);
+    border-radius: 0;
+    background: #1a1a1a;
+}
+[data-theme="persona5-dark"] .landing .feature {
+    border-radius: 0;
+    position: relative;
+}
+[data-theme="persona5-dark"] .landing .feature-icon {
+    color: var(--red);
+    font-weight: 900;
+}
+[data-theme="persona5-dark"] .landing .feature-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+[data-theme="persona5-dark"] .landing .section-label {
+    color: var(--red);
+    font-weight: 900;
+    letter-spacing: 0.15em;
+}
+[data-theme="persona5-dark"] .landing .course-card {
+    border: 2px solid #2a2a2a;
+    border-radius: 0;
+    transition: all 0.15s ease;
+    position: relative;
+}
+[data-theme="persona5-dark"] .landing .course-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--red);
+}
+[data-theme="persona5-dark"] .landing .course-card:hover {
+    border-color: var(--red);
+    transform: skewX(-1deg) translateY(-2px);
+    box-shadow: 4px 4px 0 var(--red);
+}
+[data-theme="persona5-dark"] .landing .course-card .course-name {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 1.5rem;
+}
+[data-theme="persona5-dark"] .landing .course-card .course-status {
+    color: var(--red);
+}
+[data-theme="persona5-dark"] .landing .landing-footer .vibe-tag {
+    color: var(--red);
+    opacity: 0.8;
+}
+
 @keyframes p5SlideIn {
     from {
         opacity: 0;
