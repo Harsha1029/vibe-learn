@@ -724,7 +724,13 @@ body.focus-mode .container > * {
     transition: opacity 0.2s ease;
 }
 
-body.focus-mode .lesson {
+body.focus-mode .lesson,
+body.focus-mode .module-header,
+body.focus-mode .dp-stats,
+body.focus-mode .dp-config,
+body.focus-mode #dp-session,
+body.focus-mode .dp-complete,
+body.focus-mode #dp-empty {
     opacity: 1;
 }
 

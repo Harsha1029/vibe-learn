@@ -299,6 +299,7 @@
 
     window.nextExercise = function() {
         sessionResults.completed++;
+        if (window.Streaks) window.Streaks.recordActivity();
         advance();
     };
 
