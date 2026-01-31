@@ -4,7 +4,8 @@
     "slug": "k8s-course",
     "description": "Kubernetes from the ground up, following the \"Hard Way\" philosophy: understand every component before using abstractions. Covers core K8s, networking, security, Helm chart development, and production patterns.",
     "storagePrefix": "k8s-course",
-    "status": "In progress — all modules written, exercises pending"
+    "status": "In progress — all modules written, exercises pending",
+    "hidden": true
   },
   "tracks": [
     { "id": 0, "title": "Foundation", "modules": [0, 1] },

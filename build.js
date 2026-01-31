@@ -641,7 +641,7 @@ self.addEventListener('activate', function(event) {
     const totalFiles = collectDistFiles(COURSE_DIST, '').length + 1; // +1 for sw.js
     console.log(`\nCourse "${course.name}" built! ${totalFiles} files in dist/${slug}/`);
 
-    return { slug, name: course.name, description: course.description, status: course.status || null, moduleCount: modules.filter(m => m.id > 0).length };
+    return { slug, name: course.name, description: course.description, status: course.status || null, hidden: !!course.hidden, moduleCount: modules.filter(m => m.id > 0).length };
 }
 
 // ---------------------------------------------------------------------------
@@ -652,9 +652,9 @@ function buildLandingPage(courseInfos) {
 
     const landingTemplate = loadTemplate('landing.html');
 
-    // Build course cards HTML
+    // Build course cards HTML (skip hidden courses)
     let cardsHtml = '';
-    courseInfos.forEach(info => {
+    courseInfos.filter(info => !info.hidden).forEach(info => {
         cardsHtml += `            <a href="${info.slug}/index.html" class="course-card">\n`;
         cardsHtml += `                <div class="course-name">${info.name}</div>\n`;
         cardsHtml += `                <div class="course-desc">${info.description}</div>\n`;
