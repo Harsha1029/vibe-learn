@@ -731,6 +731,14 @@ body.focus-mode #dp-empty {
     opacity: 1;
 }
 
+body.focus-mode #dp-config {
+    opacity: 1;
+}
+
+body.focus-mode.dp-in-session #dp-config {
+    opacity: 0.45;
+}
+
 body.focus-mode .session-timer,
 body.focus-mode .floating-session-timer,
 body.focus-mode .focus-toggle {

@@ -230,7 +230,7 @@
         hide('dp-stats');
         show('dp-session');
         show('dp-nav-standard');
-
+        document.body.classList.add('dp-in-session');
 
         // Show loading state while variant data loads
         const container = document.getElementById('dp-exercise-container');
@@ -267,7 +267,7 @@
         hide('dp-stats');
         show('dp-session');
         show('dp-nav-standard');
-
+        document.body.classList.add('dp-in-session');
 
         var container = document.getElementById('dp-exercise-container');
         if (container) {
