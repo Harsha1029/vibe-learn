@@ -1085,8 +1085,13 @@ body.sidebar-open .sidebar-toggle:hover {
 }
 
 /* Add top padding when sidebar toggle is present */
-body.has-sidebar .container {
+.has-sidebar .container {
     padding-top: 4rem;
+}
+
+/* Hide the old inline nav — sidebar replaces it */
+.has-sidebar .container > nav:first-child {
+    display: none;
 }
 
 /* When sidebar is open on medium screens, shift content right */

@@ -1,8 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Titillium+Web:wght@400;600;700&display=swap');
-
 /* ============================================
    Factorio Theme Specific Styles
    Industrial automation aesthetic
+   Fonts (Titillium Web, Share Tech Mono) loaded via <link> in head
    ============================================ */
 [data-theme="factorio-dark"] {
     --factorio-yellow: #ffd54f;

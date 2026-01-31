@@ -40,12 +40,6 @@
         const currentPage = getCurrentPage();
         const sections = getPageSections();
 
-        // Hide the old nav element
-        const oldNav = document.querySelector('.container > nav');
-        if (oldNav) {
-            oldNav.style.display = 'none';
-        }
-
         // Create backdrop for mobile
         const backdrop = document.createElement('div');
         backdrop.className = 'sidebar-backdrop';

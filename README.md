@@ -432,7 +432,7 @@ The sidebar, dashboard nav pills, data backup, and `CourseConfig.plugins` array 
 8. **Build plugins** — for each active plugin: loads YAML content, runs optional build-time transforms (e.g., rendering markdown in challenge requirements), generates data JS files, processes HTML templates, copies plugin JS to dist
 9. **Compile data to JS** — converts exercise YAML to `data/module*-variants.js` (sets `window.moduleData`). Also generates `course-data.js` (sets `window.CourseConfig` with all module metadata, tracks, computed sidebar, annotation types, and active plugin list)
 10. **Bundle** — copies engine JS files, CSS, theme files, and course assets into `dist/<slug>/`
-11. **Service worker** — generates `sw.js` with a manifest of every file in the build, using a network-first caching strategy for offline support
+11. **Service worker** — generates `sw.js` with a manifest of every file in the build, using a cache-first strategy for instant loads and offline support
 12. **Landing page** — generates `dist/index.html` with a card for each non-hidden course
 
 The output is plain HTML/CSS/JS. Host it anywhere — GitHub Pages, Netlify, S3, a USB stick, `python3 -m http.server`.
@@ -523,7 +523,7 @@ All keys are prefixed with the course's `storagePrefix` (e.g., `go-course-progre
 
 ### Service worker
 
-Generated at build time with a versioned cache name and a manifest of every file in the build output. Uses a network-first strategy: always tries to fetch fresh content, falls back to cache when offline. On activation, deletes all previous cache versions and claims all open tabs.
+Generated at build time with a versioned cache name and a manifest of every file in the build output. Uses a cache-first strategy: serves assets instantly from cache, falling back to network on cache miss. Freshness is handled by the cache version — each build produces a new `CACHE_NAME`, so deploying new code triggers a full cache refresh. On activation, deletes all previous cache versions and claims all open tabs.
 
 ## Contributing
 

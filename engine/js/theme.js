@@ -95,13 +95,41 @@
         return 'factorio-dark';
     }
 
-    // Apply theme to document
+    // Theme-specific Google Fonts URLs (loaded async, not via @import)
+    var themeFonts = {
+        'factorio-dark': 'https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Titillium+Web:wght@400;600;700&display=swap',
+        'persona5-dark': 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Bebas+Neue&family=Archivo+Black&display=swap'
+    };
+
+    // Apply theme to document and swap the theme CSS + fonts
     function setTheme(theme) {
         if (theme === 'dark') {
             document.documentElement.removeAttribute('data-theme');
+            var removeLink = document.getElementById('theme-css');
+            if (removeLink) removeLink.remove();
         } else {
             document.documentElement.setAttribute('data-theme', theme);
+            var link = document.getElementById('theme-css');
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.id = 'theme-css';
+                document.head.appendChild(link);
+            }
+            link.href = 'themes/' + theme + '.css';
         }
+
+        // Swap theme font
+        var oldFont = document.getElementById('theme-font');
+        if (oldFont) oldFont.remove();
+        if (themeFonts[theme]) {
+            var fontLink = document.createElement('link');
+            fontLink.rel = 'stylesheet';
+            fontLink.id = 'theme-font';
+            fontLink.href = themeFonts[theme];
+            document.head.appendChild(fontLink);
+        }
+
         safeSet(_themeKey(), theme);
     }
 
