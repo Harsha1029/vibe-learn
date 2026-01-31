@@ -74,14 +74,20 @@
 
     /** Minimum reviews per module before showing a strength label */
     var MIN_REVIEWS = 5;
+    var MIN_CONCEPT_REVIEWS = 3;
 
     /** Determine strength label from average ease factor */
-    function strengthLabel(avgEase, count) {
-        if (count < MIN_REVIEWS) return 'Too early';
+    function strengthLabel(avgEase, count, minReviews) {
+        if (count < (minReviews || MIN_REVIEWS)) return 'Too early';
         if (avgEase >= 2.5) return 'Strong';
         if (avgEase >= 2.0) return 'Good';
         if (avgEase >= 1.7) return 'Moderate';
         return 'Weak';
+    }
+
+    /** Strip variant suffix from SRS key: m1_challenge_4_v9 -> m1_challenge_4 */
+    function stripVariantSuffix(key) {
+        return key.replace(/_v\d+$/, '');
     }
 
     // ---------------------------------------------------------------------------
@@ -204,11 +210,59 @@
             if (srsEntry.repetitions >= 2 && srsEntry.easeFactor < 1.7) weakCount++;
         }
 
+        // 8. Concept strength breakdown
+        var conceptMap = {}; // "moduleNum|concept" -> { totalEase, count }
+        var conceptIndex = window.ConceptIndex || {};
+
+        for (var ci = 0; ci < srsKeys.length; ci++) {
+            var cKey = srsKeys[ci];
+            if (cKey.indexOf('fc_') === 0) continue; // skip flashcards
+            var cEntry = srsData[cKey];
+            var cModNum = extractModuleNum(cKey);
+            if (cModNum === null) continue;
+
+            var baseKey = stripVariantSuffix(cKey);
+            var conceptName = conceptIndex[baseKey];
+            if (!conceptName) continue;
+
+            var conceptGroupKey = cModNum + '|' + conceptName;
+            if (!conceptMap[conceptGroupKey]) {
+                conceptMap[conceptGroupKey] = { moduleNum: cModNum, concept: conceptName, totalEase: 0, count: 0 };
+            }
+            conceptMap[conceptGroupKey].totalEase += cEntry.easeFactor;
+            conceptMap[conceptGroupKey].count++;
+        }
+
+        var concepts = [];
+        var conceptGroupKeys = Object.keys(conceptMap);
+        for (var cg = 0; cg < conceptGroupKeys.length; cg++) {
+            var cData = conceptMap[conceptGroupKeys[cg]];
+            var cAvgEase = cData.totalEase / cData.count;
+            var cLabel = strengthLabel(cAvgEase, cData.count, MIN_CONCEPT_REVIEWS);
+            concepts.push({
+                moduleNum: cData.moduleNum,
+                concept: cData.concept,
+                avgEase: Math.round(cAvgEase * 10) / 10,
+                count: cData.count,
+                label: cLabel,
+                color: strengthColor(cLabel)
+            });
+        }
+
+        // Sort: "Too early" at bottom, then weakest-first by avgEase
+        concepts.sort(function(a, b) {
+            var aEarly = a.label === 'Too early' ? 1 : 0;
+            var bEarly = b.label === 'Too early' ? 1 : 0;
+            if (aEarly !== bEarly) return aEarly - bEarly;
+            return a.avgEase - b.avgEase;
+        });
+
         return {
             totalTracked: totalTracked,
             masteredCount: masteredCount,
             weakCount: weakCount,
             modules: modules,
+            concepts: concepts,
             weakest: weakest,
             ratings: { gotIt: gotIt, struggled: struggled, peeked: peeked }
         };
@@ -281,6 +335,32 @@
                 '</div>';
         }
         rankingsEl.innerHTML = rankingsHTML;
+
+        // ------ Concept Strength ------
+        var conceptEl = document.getElementById('concept-strength');
+        var conceptHTML = '';
+        if (report.concepts.length === 0) {
+            conceptHTML = '<div style="padding: 1.5rem; text-align: center; color: var(--text-dim);">No concept data available. Complete some exercises to see per-concept breakdown.</div>';
+        } else {
+            for (var c = 0; c < report.concepts.length; c++) {
+                var con = report.concepts[c];
+                var cIsTooEarly = con.label === 'Too early';
+                var cPct = cIsTooEarly ? 0 : Math.min(100, Math.round((con.avgEase / 3.0) * 100));
+                var cEaseDisplay = cIsTooEarly ? '' : '<span style="color: var(--text-dim); font-size: 0.8rem; min-width: 3.5rem;">' + con.avgEase + '</span>';
+                conceptHTML +=
+                    '<div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; background: var(--bg-card); border-radius: 5px; margin-bottom: 0.4rem; border-left: 3px solid ' + con.color + '; font-size: 0.9rem;">' +
+                        '<a href="module' + con.moduleNum + '.html" style="color: var(--text-dim); min-width: 2rem; text-decoration: none;">M' + con.moduleNum + '</a>' +
+                        '<span style="flex: 1;">' + con.concept + '</span>' +
+                        '<span style="color: var(--text-dim); font-size: 0.75rem;">' + con.count + ' reviews</span>' +
+                        '<div style="width: 100px; height: 6px; background: var(--bg-lighter); border-radius: 3px; overflow: hidden;">' +
+                            '<div style="width: ' + cPct + '%; height: 100%; background: ' + con.color + '; border-radius: 3px;"></div>' +
+                        '</div>' +
+                        cEaseDisplay +
+                        '<span class="module-tag" style="background: ' + con.color + '; font-size: 0.7rem;">' + con.label + '</span>' +
+                    '</div>';
+            }
+        }
+        conceptEl.innerHTML = conceptHTML;
 
         // ------ Weakest Exercises ------
         var weakestEl = document.getElementById('weakest-exercises');
