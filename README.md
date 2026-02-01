@@ -312,98 +312,114 @@ Users switch themes from a button in the sidebar. Selection persists in localSto
 
 ## Architecture
 
-```mermaid
-graph LR
-    subgraph BUILD["BUILD TIME"]
-        subgraph content["courses/&lt;slug&gt;/"]
-            CJ[course.json]
-            LMD[lessons/*.md]
-            EX[exercises/*-variants.yaml]
-            FC[flashcards/flashcards.yaml]
-            ALG[algorithms/algorithms.yaml]
-            RWC[real-world-challenges/*.yaml]
-            ASSETS[assets/*]
-        end
+### Build pipeline
 
-        subgraph eng["engine/"]
-            TPL[templates/<br/>landing · index<br/>module · project]
-            JS[js/*.js]
-            CSS[css/style.css]
-            THEMES[themes/*.css]
-            subgraph plugins["plugins/"]
-                P_FC[flashcards/]
-                P_DP[daily-practice/]
-                P_AN[analytics/]
-                P_AL[algorithms/]
-                P_RW[real-world-challenges/]
-            end
-        end
+```
+ courses/<slug>/                engine/
+ ├─ course.json                 ├─ templates/
+ ├─ content/                    │  ├─ landing.html
+ │  ├─ lessons/*.md             │  ├─ index.html
+ │  ├─ exercises/               │  ├─ module.html
+ │  │  └─ *-variants.yaml      │  └─ project.html
+ │  ├─ flashcards/              ├─ js/*.js
+ │  │  └─ flashcards.yaml      ├─ css/style.css
+ │  ├─ algorithms/              ├─ themes/*.css
+ │  │  └─ algorithms.yaml      └─ plugins/
+ │  ├─ real-world-challenges/      ├─ flashcards/
+ │  │  └─ *.yaml                   ├─ daily-practice/
+ │  └─ assets/*                    ├─ analytics/
+        │                          ├─ algorithms/
+        │                          └─ real-world-challenges/
+        │                                   │
+        ▼                                   ▼
+ ┌─────────────────────────────────────────────────┐
+ │                    build.js                      │
+ │         marked · highlight.js · js-yaml          │
+ │                                                  │
+ │  1. Discover courses (scan courses/)             │
+ │  2. Discover plugins (scan engine/plugins/)      │
+ │  3. Filter active plugins per course             │
+ │  4. Parse markdown + YAML content                │
+ │  5. Render HTML with syntax highlighting         │
+ │  6. Build plugin data (transforms, templates)    │
+ │  7. Compile exercise YAML → JS data files        │
+ │  8. Bundle engine JS, CSS, themes, assets        │
+ │  9. Generate service worker manifest             │
+ └──────────────────────┬──────────────────────────┘
+                        ▼
+              dist/<slug>/
+              ├─ index.html
+              ├─ module*.html
+              ├─ project*.html
+              ├─ <plugin>.html
+              ├─ course-data.js
+              ├─ concept-index.js
+              ├─ data/module*-variants.js
+              ├─ flashcard-data.js
+              ├─ algorithm-data.js
+              ├─ *.js (engine + plugins)
+              ├─ style.css + themes/
+              └─ sw.js
+```
 
-        BUILD_JS[build.js<br/><i>marked · highlight.js · js-yaml</i>]
+### Runtime modules
 
-        content --> BUILD_JS
-        plugins --> BUILD_JS
-        TPL --> BUILD_JS
-        JS --> BUILD_JS
-        CSS --> BUILD_JS
-        THEMES --> BUILD_JS
-    end
-
-    subgraph OUTPUT["dist/&lt;slug&gt;/"]
-        HTML[index.html<br/>module*.html<br/>project*.html<br/>plugin pages]
-        DATA[data/module*-variants.js<br/>course-data.js<br/>concept-index.js]
-        PDATA[flashcard-data.js<br/>algorithm-data.js<br/>rwc-data.js]
-        STATIC[style.css · themes/ · sw.js]
-    end
-
-    BUILD_JS --> OUTPUT
-
-    subgraph RUNTIME["RUNTIME — browser"]
-        subgraph exercise_engine["Exercise Engine"]
-            CRS[course.js]
-            ER[exercise-renderer.js]
-            ML[module-loader.js]
-            EC[exercise-core.js]
-        end
-
-        subgraph practice["Practice & Review"]
-            SRS[srs.js<br/><i>SM-2 scheduler</i>]
-            FCE[flashcard-engine.js]
-            DP[daily-practice.js]
-            ALGO[algorithms.js]
-            SE[session-engine.js]
-        end
-
-        subgraph ui["UI Layer"]
-            SIDE[sidebar.js]
-            THEME[theme.js<br/><i>themes · pomodoro</i>]
-            STREAK[streaks.js<br/><i>streaks · heatmap</i>]
-            DASH[dashboard.js]
-            BACKUP[data-backup.js]
-            PROG[progress.js]
-        end
-
-        RWC_JS[real-world-challenges.js]
-        AN_JS[analytics.js]
-
-        LS[(localStorage<br/><br/>progress · srs<br/>exercise-progress<br/>streaks · activity<br/>personal-notes<br/>theme · last-module<br/>real-world-challenges<br/>algo-pattern-stats)]
-
-        exercise_engine --> SRS
-        exercise_engine --> PROG
-        FCE --> SRS
-        DP --> SRS
-        DP --> SE
-        ALGO --> SRS
-        ALGO --> SE
-        AN_JS --> SRS
-        RWC_JS --> LS
-        SRS --> LS
-        PROG --> LS
-        STREAK --> LS
-        BACKUP --> LS
-    end
-
-    OUTPUT --> RUNTIME
+```
+ ┌─────────────────────────────────────────────────────────────┐
+ │                     RUNTIME (browser)                       │
+ │                                                             │
+ │  ┌─ Exercise Engine ──────────────────────────────────────┐ │
+ │  │  module-loader.js  loads data/module*-variants.js      │ │
+ │  │  exercise-core.js  shuffle, variants, difficulty modes │ │
+ │  │  course.js         renders exercises on module pages   │ │
+ │  │  exercise-renderer.js  hints, solutions, annotations   │ │
+ │  └────────────────────────────┬───────────────────────────┘ │
+ │                               │ rates                       │
+ │                               ▼                             │
+ │  ┌─ Practice & Review ───────────────────────────────────┐  │
+ │  │                                                       │  │
+ │  │  session-engine.js   shared session lifecycle         │  │
+ │  │       ▲         ▲                                     │  │
+ │  │       │         │                                     │  │
+ │  │  daily-      algorithms.js   flashcard-engine.js      │  │
+ │  │  practice.js  (arena sessions,  (flip/rate,           │  │
+ │  │  (review,      progression,      SRS-due,             │  │
+ │  │   discover,    blind mode,       random)              │  │
+ │  │   weak,        pattern drills)                        │  │
+ │  │   mixed)                                              │  │
+ │  │       │         │                  │                  │  │
+ │  │       └─────────┼──────────────────┘                  │  │
+ │  │                 ▼                                     │  │
+ │  │           srs.js (SM-2)                               │  │
+ │  └────────────┬──────────────────────────────────────────┘  │
+ │               │                                             │
+ │  ┌─ UI Layer ─┼──────────────────────────────────────────┐  │
+ │  │            │                                          │  │
+ │  │  sidebar.js       navigation + plugin links           │  │
+ │  │  dashboard.js     stats, resume, module progress      │  │
+ │  │  analytics.js     weak concepts, strength rankings    │  │
+ │  │  theme.js         10 themes + pomodoro timer          │  │
+ │  │  streaks.js       streak tracking + activity heatmap  │  │
+ │  │  progress.js      per-exercise state tracking         │  │
+ │  │  data-backup.js   export/import all data              │  │
+ │  │  real-world-challenges.js  challenge cards + status   │  │
+ │  └────────────┼──────────────────────────────────────────┘  │
+ │               ▼                                             │
+ │  ┌─ localStorage ────────────────────────────────────────┐  │
+ │  │  All keys prefixed with course storagePrefix          │  │
+ │  │                                                       │  │
+ │  │  <prefix>-progress          module completion flags   │  │
+ │  │  <prefix>-exercise-progress per-exercise state        │  │
+ │  │  <prefix>-srs               SM-2 scheduler data      │  │
+ │  │  <prefix>-streaks           current + longest streak  │  │
+ │  │  <prefix>-activity          daily counts (heatmap)    │  │
+ │  │  <prefix>-personal-notes    user notes per exercise   │  │
+ │  │  <prefix>-real-world-challenges  status + criteria    │  │
+ │  │  <prefix>-algo-pattern-stats     drill accuracy       │  │
+ │  │  <prefix>-last-module       resume button target      │  │
+ │  │  theme                      selected theme (shared)   │  │
+ │  └───────────────────────────────────────────────────────┘  │
+ └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Course discovery
