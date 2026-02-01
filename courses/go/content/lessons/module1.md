@@ -297,36 +297,6 @@ Combine concepts and learn algorithmic patterns. Each challenge has multiple var
 - **The "comma ok" idiom:** `value, ok := map[key]` - check if a map key exists
 - **Simultaneous assignment:** `a, b = b, a` - swap without temp variable
 
-### Algorithm Patterns & When to Use Them
-
-- **Two-pointer (opposite ends):** When you need to work from both ends toward the middle
-                    <ul style="margin-top: 0.5rem;">
-                        <li>Palindrome checking
-- Reversing arrays/strings
-- Pattern: `for i, j := 0, len(arr)-1; i < j; i, j = i+1, j-1`
-- **Slow/fast pointers:** When one pointer reads and another writes, moving at different speeds
-                    <ul style="margin-top: 0.5rem;">
-                        <li>Removing duplicates from sorted arrays
-- In-place array modifications
-- Pattern: `slow := 0` outside, `for fast := 1; ...` inside
-- **Map for tracking:** When you need to remember "have I seen this before?"
-                    <ul style="margin-top: 0.5rem;">
-                        <li>Finding duplicates
-- Counting occurrences
-- Two Sum (storing complements)
-- Pattern: Check map first, then add to map if not found
-- **Building slices with append:** When you need to filter or transform data
-                    <ul style="margin-top: 0.5rem;">
-                        <li>Filtering even numbers
-- Collecting results dynamically
-- Pattern: Start with `result := []Type{}`, then `result = append(result, item)`
-- **Sliding window:** When you need to find something optimal in a contiguous subarray
-                    <ul style="margin-top: 0.5rem;">
-                        <li>Max sum subarray of size k (fixed window)
-- Longest substring without repeating chars (variable window)
-- Pattern (fixed): Calculate first window, then slide by adding new element and subtracting old
-- Pattern (variable): Expand right pointer, shrink left when condition met/violated
-
 ### Common Gotchas
 
 - **Missing map keys return zero values** - use "comma ok" to check if key exists
