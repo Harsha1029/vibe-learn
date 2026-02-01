@@ -55,6 +55,279 @@
             border-radius: 3px;
             font-size: 0.8rem;
         }
+
+        /* --- Category Grid (Feature 1) --- */
+        .algo-category-section {
+            margin-bottom: 1rem;
+        }
+        .algo-category-section .session-config-label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .algo-category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .algo-cat-card {
+            background: var(--bg-card);
+            border: 2px solid var(--bg-lighter);
+            border-radius: 8px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+        .algo-cat-card:hover {
+            border-color: var(--purple);
+            transform: translateY(-1px);
+        }
+        .algo-cat-card.active {
+            border-color: var(--purple);
+            background: var(--bg-lighter);
+        }
+        .algo-cat-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .algo-cat-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .algo-cat-mastery-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-lighter);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        .mastery-fill {
+            height: 100%;
+            background: var(--session-gradient);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        .algo-cat-tiers {
+            display: flex;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+        }
+        .algo-cat-tiers .tier {
+            font-size: 0.7rem;
+            padding: 0.1rem 0.35rem;
+            border-radius: 3px;
+            background: var(--bg-lighter);
+            color: var(--text-dim);
+        }
+        .algo-cat-tiers .tier.unlocked {
+            color: var(--green-bright);
+        }
+        .algo-cat-tiers .tier.locked {
+            opacity: 0.5;
+            color: var(--text-dim);
+        }
+
+        /* --- Blind Mode toggle --- */
+        .algo-blind-hint {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-left: 0.25rem;
+        }
+
+        /* --- Assessment Mode (Feature 2) --- */
+        .assessment-exercise {
+            background: var(--bg-card);
+            border: 2px solid var(--bg-lighter);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        .assessment-exercise h4 {
+            margin-top: 0;
+            margin-bottom: 0.75rem;
+        }
+        .assessment-exercise .exercise-desc {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        .assessment-actions {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+        .assessment-grade-btn {
+            background: var(--purple);
+            color: var(--bg-dark);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .assessment-grade-btn:hover {
+            opacity: 0.85;
+        }
+        .assessment-reveal {
+            margin-top: 1.5rem;
+        }
+        .assessment-reveal .self-rating {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-lighter);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .assessment-reveal .self-rating-label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        .assessment-reveal .self-rating-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .assessment-reveal .rating-btn {
+            padding: 0.5rem 1.25rem;
+            border: 2px solid var(--bg-lighter);
+            border-radius: 6px;
+            background: var(--bg-card);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        .assessment-reveal .rating-btn:hover:not(:disabled) {
+            border-color: var(--purple);
+        }
+        .assessment-reveal .rating-btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+        .assessment-reveal .rating-btn.selected {
+            border-color: var(--purple);
+            background: var(--purple);
+            color: var(--bg-dark);
+            opacity: 1;
+        }
+        .assessment-solution-reveal {
+            animation: fadeInReveal 0.4s ease;
+        }
+        @keyframes fadeInReveal {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Pattern Drill (Feature 3) --- */
+        .pattern-drill-card {
+            background: var(--bg-card);
+            border: 2px solid var(--bg-lighter);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        .pattern-drill-card h4 {
+            margin-top: 0;
+            color: var(--purple);
+        }
+        .pattern-drill-desc {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        .pattern-drill-choices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .pattern-choice {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--bg-lighter);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-align: left;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .pattern-choice:hover:not(:disabled) {
+            border-color: var(--purple);
+        }
+        .pattern-choice:disabled {
+            cursor: default;
+        }
+        .pattern-choice.correct {
+            border-color: var(--green-bright);
+            background: rgba(0, 255, 100, 0.1);
+            color: var(--green-bright);
+        }
+        .pattern-choice.incorrect {
+            border-color: var(--red);
+            background: rgba(255, 50, 50, 0.1);
+            color: var(--red);
+        }
+        .pattern-drill-result {
+            margin-top: 1.5rem;
+            animation: fadeInReveal 0.4s ease;
+        }
+        .pattern-result-icon {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+        .pattern-drill-result .pattern-result-icon:first-child {
+            color: var(--green-bright);
+        }
+        .pattern-drill-result:has(.incorrect) .pattern-result-icon:first-child,
+        .pattern-drill-card:has(.pattern-choice.incorrect) .pattern-result-icon {
+            color: var(--red);
+        }
+        .pattern-primer {
+            background: var(--bg-lighter);
+            border-radius: 6px;
+            padding: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .pattern-primer strong {
+            color: var(--purple);
+        }
+        .pattern-primer p {
+            margin: 0.25rem 0;
+        }
+        .pattern-drill-results h3 {
+            margin-top: 0;
+            color: var(--purple);
+        }
+
+        /* --- Drill info box --- */
+        .algo-drill-info {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-lighter);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            .algo-category-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .pattern-drill-choices {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 400px) {
+            .algo-category-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body data-module="algorithms">
@@ -91,12 +364,57 @@
 
         <!-- Configuration -->
         <div class="session-config" id="algo-config">
-            <div class="session-config-row">
+            <!-- Category Grid (Feature 1) -->
+            <div class="algo-category-section">
                 <span class="session-config-label">Category:</span>
-                <div class="session-config-options" id="algo-category-options">
-                    <button class="session-option active" data-category="all">All</button>
+                <div class="algo-category-grid" id="algo-category-grid">
+                    <!-- Populated by renderCategoryGrid() -->
                 </div>
             </div>
+
+            <!-- Session Type Toggle (Feature 3) -->
+            <div class="session-config-row">
+                <span class="session-config-label">Session Type:</span>
+                <div class="session-config-options" id="algo-type-options">
+                    <button class="session-option active" data-type="practice">Practice</button>
+                    <button class="session-option" data-type="pattern-drill">Pattern Drill</button>
+                </div>
+            </div>
+
+            <!-- Pattern Drill info (shown when pattern-drill selected) -->
+            <div class="algo-drill-info" id="algo-drill-info" style="display: none;">
+                Identify which algorithm pattern solves each problem. No coding &mdash; just pattern recognition.
+                Choose from 4 options per question.
+            </div>
+
+            <!-- Practice-specific config rows (hidden when pattern-drill) -->
+            <div class="session-config-row practice-config-row">
+                <span class="session-config-label">Difficulty:</span>
+                <div class="session-config-options" id="algo-difficulty-options">
+                    <button class="session-option" data-difficulty="easy">Easy</button>
+                    <button class="session-option active" data-difficulty="balanced">Balanced</button>
+                    <button class="session-option" data-difficulty="progressive">Progressive</button>
+                    <button class="session-option" data-difficulty="hard">Hard</button>
+                </div>
+            </div>
+            <div class="session-config-row practice-config-row">
+                <span class="session-config-label">Mode:</span>
+                <div class="session-config-options" id="algo-mode-options">
+                    <button class="session-option" data-mode="discover">Discover</button>
+                    <button class="session-option active" data-mode="mixed">Mixed</button>
+                    <button class="session-option" data-mode="review">Review</button>
+                    <button class="session-option" data-mode="weakest">Weakest</button>
+                </div>
+            </div>
+            <div class="session-config-row practice-config-row">
+                <span class="session-config-label">Blind Mode:</span>
+                <div class="session-config-options" id="algo-blind-options">
+                    <button class="session-option active" data-blind="off">Off</button>
+                    <button class="session-option" data-blind="on">On</button>
+                </div>
+                <span class="algo-blind-hint">Hides hints &amp; solutions &mdash; grade yourself, then reveal</span>
+            </div>
+
             <div class="session-config-row">
                 <span class="session-config-label">Session Size:</span>
                 <div class="session-config-options" id="algo-count-options">
@@ -106,24 +424,7 @@
                     <button class="session-option" data-count="20">20</button>
                 </div>
             </div>
-            <div class="session-config-row">
-                <span class="session-config-label">Difficulty:</span>
-                <div class="session-config-options" id="algo-difficulty-options">
-                    <button class="session-option" data-difficulty="easy">Easy</button>
-                    <button class="session-option active" data-difficulty="balanced">Balanced</button>
-                    <button class="session-option" data-difficulty="progressive">Progressive</button>
-                    <button class="session-option" data-difficulty="hard">Hard</button>
-                </div>
-            </div>
-            <div class="session-config-row">
-                <span class="session-config-label">Mode:</span>
-                <div class="session-config-options" id="algo-mode-options">
-                    <button class="session-option" data-mode="discover">Discover</button>
-                    <button class="session-option active" data-mode="mixed">Mixed</button>
-                    <button class="session-option" data-mode="review">Review</button>
-                    <button class="session-option" data-mode="weakest">Weakest</button>
-                </div>
-            </div>
+
             <div class="session-start-area">
                 <button class="session-start-btn-main" id="algo-start" onclick="AlgorithmPractice.startSession()" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Start Session</button>
                 <p id="algo-start-hint" style="color: var(--purple); font-size: 0.85rem; margin-top: 0.5rem; display: none;"></p>
@@ -170,22 +471,31 @@
             <details>
                 <summary>How Algorithm Practice Works</summary>
                 <div class="algo-help-content">
-                    <h4>Difficulty Progression</h4>
-                    <p>Each problem has 3-5 variants at increasing difficulty levels:</p>
-                    <p>Level 1 (Easy): Direct implementation with clear hints, like LeetCode Easy</p>
-                    <p>Level 2 (Medium): Standard interview-level, fewer hints</p>
-                    <p>Level 3 (Hard): Edge cases, optimizations, constraints - like LeetCode Hard</p>
-
-                    <h4>Rating Guide</h4>
-                    <p><strong>Got it</strong> - You knew the pattern and wrote the solution without getting stuck</p>
-                    <p><strong>Struggled</strong> - You solved it but needed significant effort, hints, or debugging</p>
-                    <p><strong>Needed solution</strong> - You had to look at the solution to understand the approach</p>
+                    <h4>Session Types</h4>
+                    <p><strong>Practice</strong> - Standard coding practice with hints, solutions, and pattern primers available</p>
+                    <p><strong>Pattern Drill</strong> - Multiple-choice: identify which algorithm pattern solves each problem (no coding)</p>
 
                     <h4>Practice Modes</h4>
                     <p><strong>Discover</strong> - See new problems you haven't practiced yet</p>
                     <p><strong>Mixed</strong> - Combination of due reviews and weak problems</p>
                     <p><strong>Review</strong> - Problems due for spaced repetition review</p>
                     <p><strong>Weakest</strong> - Problems you've struggled with most</p>
+
+                    <h4>Blind Mode</h4>
+                    <p>Works with any mode. Hides hints, solutions, and pattern primers during the exercise.
+                    Write your solution, click "Ready to Grade", self-rate, then the full solution is revealed.</p>
+
+                    <h4>Difficulty Progression</h4>
+                    <p>Each problem has 3-5 variants at increasing difficulty levels:</p>
+                    <p>Level 1 (Easy): Direct implementation with clear hints, like LeetCode Easy</p>
+                    <p>Level 2 (Medium): Standard interview-level, fewer hints</p>
+                    <p>Level 3 (Hard): Edge cases, optimizations, constraints - like LeetCode Hard</p>
+                    <p><strong>Progressive</strong> difficulty gates medium/hard tiers until you master 70% of the previous tier.</p>
+
+                    <h4>Rating Guide</h4>
+                    <p><strong>Got it</strong> - You knew the pattern and wrote the solution without getting stuck</p>
+                    <p><strong>Struggled</strong> - You solved it but needed significant effort, hints, or debugging</p>
+                    <p><strong>Needed solution</strong> - You had to look at the solution to understand the approach</p>
 
                     <h4>Spaced Repetition</h4>
                     <p>After rating each problem, it's scheduled for future review. Problems you find

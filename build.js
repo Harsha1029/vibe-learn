@@ -532,6 +532,7 @@ function buildCourse(slug) {
 
     // 10. Build plugins (generic loop)
     console.log('Building plugins...');
+    let algorithmParsedData = null; // Cache for ConceptIndex integration
     activePlugins.forEach(plugin => {
         console.log(`  Plugin: ${plugin.name}`);
 
@@ -567,6 +568,11 @@ function buildCourse(slug) {
                     `// Auto-generated from ${plugin.contentPattern} - do not edit directly\nwindow.${plugin.dataGlobal} = ${JSON.stringify(parsed)};\n`
                 );
                 console.log(`    ${plugin.dataFile}${isEmpty ? ' (empty)' : ''}`);
+
+                // Cache algorithm data for ConceptIndex integration
+                if (plugin.name === 'algorithms' && parsed.categories) {
+                    algorithmParsedData = parsed;
+                }
             }
         }
 
@@ -643,6 +649,21 @@ function buildCourse(slug) {
         fs.writeFileSync(path.join(COURSE_DIST, 'data', jsFile), js);
         console.log(`  data/${jsFile}`);
     });
+
+    // Add algorithm concepts to ConceptIndex
+    if (algorithmParsedData && algorithmParsedData.categories) {
+        let algoConceptCount = 0;
+        algorithmParsedData.categories.forEach(cat => {
+            if (!cat.problems) return;
+            cat.problems.forEach(problem => {
+                if (problem.id && problem.concept) {
+                    conceptIndex['algo_' + cat.id + '_' + problem.id] = problem.concept;
+                    algoConceptCount++;
+                }
+            });
+        });
+        console.log(`  Added ${algoConceptCount} algorithm concept entries to ConceptIndex`);
+    }
 
     // Write concept-index.js
     const conceptCount = Object.keys(conceptIndex).length;

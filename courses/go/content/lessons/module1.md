@@ -259,7 +259,7 @@ Practice individual concepts you just learned.
 
 ### 💪 Challenges
 
-Combine concepts and learn algorithmic patterns. Each challenge has multiple variants at different difficulties - shuffle to keep things fresh!
+Apply Go fundamentals with hands-on coding challenges. Each challenge has multiple variants at different difficulties - shuffle to keep things fresh!
 
 <div id="challenges-container">
             <noscript><p class="js-required">JavaScript is required for the interactive exercises.</p></noscript>
@@ -267,7 +267,7 @@ Combine concepts and learn algorithmic patterns. Each challenge has multiple var
 
 > **Learning Path:** **Warmups** → master basic syntax with quick drills (6 concepts, ~79 variants)
 >
-> **Challenges** → 14 exercises with 180 variants across easy/medium/hard difficulties
+> **Challenges** → 14 exercises with 182 variants across easy/medium/hard difficulties
 >
 > **Progressive difficulty:**
 >
@@ -275,7 +275,7 @@ Combine concepts and learn algorithmic patterns. Each challenge has multiple var
 >
 > • Use the "Get Harder Version" button to progressively challenge yourself
 >
-> • Filter by pattern/concept to focus on specific algorithmic techniques
+> • Filter by concept to focus on specific Go fundamentals
 >
 > • Shuffle to practice with fresh variants!
 >
