@@ -725,13 +725,8 @@ body.focus-mode .container > * {
 }
 
 body.focus-mode .lesson,
-body.focus-mode #dp-session,
-body.focus-mode .session-complete,
-body.focus-mode #dp-empty {
-    opacity: 1;
-}
-
-body.focus-mode #dp-config {
+body.focus-mode .focus-content,
+body.focus-mode .session-complete {
     opacity: 1;
 }
 
