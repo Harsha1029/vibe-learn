@@ -43,9 +43,14 @@
      * @param {string} btnClass      - CSS class of the buttons (e.g. 'session-option')
      * @param {object} configObj     - Config object to mutate
      * @param {string} configKey     - Key on configObj to set
-     * @param {Function} [transform] - Optional value transform (e.g. parseInt)
+     * @param {Function|object} [transformOrOpts] - Value transform function, or options object
+     * @param {Function} [transformOrOpts.transform] - Optional value transform (e.g. parseInt)
+     * @param {Function} [transformOrOpts.onChange]   - Optional callback after value change
      */
-    function setupOptionGroup(containerId, btnClass, configObj, configKey, transform) {
+    function setupOptionGroup(containerId, btnClass, configObj, configKey, transformOrOpts) {
+        var transform = typeof transformOrOpts === 'function' ? transformOrOpts : (transformOrOpts && transformOrOpts.transform);
+        var onChange = (transformOrOpts && typeof transformOrOpts === 'object') ? transformOrOpts.onChange : undefined;
+
         document.querySelectorAll('#' + containerId + ' .' + btnClass).forEach(function(btn) {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('#' + containerId + ' .' + btnClass).forEach(function(b) {
@@ -54,6 +59,7 @@
                 btn.classList.add('active');
                 var val = btn.dataset[configKey];
                 configObj[configKey] = transform ? transform(val) : val;
+                if (onChange) onChange(configObj[configKey], btn);
             });
         });
     }
@@ -345,6 +351,17 @@
         return candidates.slice(0, count);
     }
 
+    // --- HTML Utilities ---
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
     // --- Public API ---
 
     window.SessionEngine = {
@@ -365,6 +382,7 @@
         finishSession: finishSession,
         updateStats: updateStats,
         buildDiscoverQueue: buildDiscoverQueue,
-        buildPaddedSRSQueue: buildPaddedSRSQueue
+        buildPaddedSRSQueue: buildPaddedSRSQueue,
+        escapeHtml: escapeHtml
     };
 })();

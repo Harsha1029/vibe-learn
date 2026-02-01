@@ -72,37 +72,36 @@ Open `http://localhost:8000` for the course picker, or `http://localhost:8000/go
 
 ### 1. Create a course directory
 
-Create `courses/<your-slug>/course.json`:
+Create `courses/<your-slug>/course.yaml`:
 
-```json
-{
-  "course": {
-    "name": "Your Course",
-    "slug": "your-course",
-    "description": "What this course covers.",
-    "storagePrefix": "your-course"
-  },
-  "tracks": [
-    { "id": 0, "title": "Basics", "modules": [0, 1, 2] }
-  ],
-  "modules": [
-    {
-      "id": 0,
-      "num": "01",
-      "title": "Getting Started",
-      "description": "First steps.",
-      "file": "module0",
-      "hasExercises": false
-    }
-  ],
-  "projects": [],
-  "annotationTypes": {}
-}
+```yaml
+course:
+  name: Your Course
+  slug: your-course
+  description: What this course covers.
+  storagePrefix: your-course
+
+tracks:
+  - title: Basics
+    modules: [0, 1, 2]
+
+modules:
+  - title: Getting Started
+    description: First steps.
+    hasExercises: false
+
+projects: []
+annotationTypes: {}
 ```
 
-- `storagePrefix` namespaces localStorage keys — change it per course so progress doesn't collide
-- `hasExercises` controls whether the exercise renderer scripts are loaded
-- `file` maps to `courses/<slug>/content/lessons/<file>.md`
+Most module fields are auto-derived at build time from the array index:
+- `id` — array index (override with explicit `id` if modules aren't zero-indexed)
+- `num` — string of `id`
+- `file` — `"module" + id` (maps to `courses/<slug>/content/lessons/module<id>.md`)
+- `hasExercises` — defaults to `true` (opt out with `hasExercises: false`)
+- Track `id` — array index + 1
+
+Only `title` is required per module. `storagePrefix` namespaces localStorage keys — change it per course so progress doesn't collide.
 
 ### 2. Write lessons in markdown
 
@@ -122,7 +121,7 @@ print("hello")
 
 ### 3. Add exercises (optional)
 
-Create `courses/<your-slug>/content/exercises/module0-variants.yaml` and set `hasExercises: true` in course.json:
+Create `courses/<your-slug>/content/exercises/module0-variants.yaml` and set `hasExercises: true` in course.yaml (or just omit it — `true` is the default):
 
 ```yaml
 conceptLinks:
@@ -193,7 +192,7 @@ npm run build              # builds all courses
 node build.js your-slug    # builds just your course
 ```
 
-The sample course (`courses/sample/`) demonstrates every feature. The build auto-discovers courses by scanning `courses/` for directories containing a `course.json`.
+The sample course (`courses/sample/`) demonstrates every feature. The build auto-discovers courses by scanning `courses/` for directories containing a `course.yaml`.
 
 ## Included courses
 
@@ -264,7 +263,7 @@ vibe-learn/
 │
 ├── courses/                 # One directory per course
 │   └── <slug>/
-│       ├── course.json      # Course manifest (tracks, modules, projects)
+│       ├── course.yaml      # Course manifest (tracks, modules, projects)
 │       └── content/
 │           ├── lessons/     # Markdown files (one per module/project)
 │           ├── exercises/   # Exercise variants (YAML, per module)
@@ -278,6 +277,7 @@ vibe-learn/
 │   ├── css/                 # Shared styles
 │   ├── themes/              # Color themes
 │   ├── templates/           # HTML page templates
+│   ├── partials/            # Reusable HTML fragments (head, nav, rating guide, etc.)
 │   └── plugins/             # Feature plugins (self-contained)
 │       ├── flashcards/
 │       ├── daily-practice/
@@ -296,18 +296,24 @@ vibe-learn/
 
 ```
  courses/<slug>/                engine/
- ├─ course.json                 ├─ templates/
+ ├─ course.yaml                 ├─ templates/
  ├─ content/                    │  ├─ landing.html
  │  ├─ lessons/*.md             │  ├─ index.html
  │  ├─ exercises/               │  ├─ module.html
  │  │  └─ *-variants.yaml      │  └─ project.html
- │  ├─ flashcards/              ├─ js/*.js
- │  │  └─ flashcards.yaml      ├─ css/style.css
- │  ├─ algorithms/              ├─ themes/*.css
- │  │  └─ algorithms.yaml      └─ plugins/
- │  ├─ real-world-challenges/      ├─ flashcards/
- │  │  └─ *.yaml                   ├─ daily-practice/
- │  └─ assets/*                    ├─ analytics/
+ │  ├─ flashcards/              ├─ partials/
+ │  │  └─ flashcards.yaml      │  ├─ head.html
+ │  ├─ algorithms/              │  ├─ dashboard-nav.html
+ │  │  └─ algorithms.yaml      │  ├─ rating-guide.html
+ │  ├─ real-world-challenges/   │  ├─ session-nav.html
+ │  │  └─ *.yaml                │  └─ session-complete.html
+ │  └─ assets/*                 ├─ js/*.js
+        │                       ├─ css/style.css
+        │                       ├─ themes/*.css
+        │                       └─ plugins/
+        │                          ├─ flashcards/
+        │                          ├─ daily-practice/
+        │                          ├─ analytics/
         │                          ├─ algorithms/
         │                          └─ real-world-challenges/
         │                                   │
@@ -404,11 +410,11 @@ vibe-learn/
 
 ### Course discovery
 
-The build auto-discovers courses by scanning `courses/` for subdirectories that contain a `course.json`. Drop a new folder with a manifest and content, run `npm run build`, and it appears on the site. No registration step, no config file to update.
+The build auto-discovers courses by scanning `courses/` for subdirectories that contain a `course.yaml`. Drop a new folder with a manifest and content, run `npm run build`, and it appears on the site. No registration step, no config file to update.
 
-Each `course.json` declares a `storagePrefix` (e.g., `"go-course"`) that namespaces all localStorage keys, so multiple courses coexist in the same browser without collisions. The `course-config.js` runtime helper exposes `storageKey(suffix)` which every other module uses to read/write its data (e.g., `storageKey('srs')` → `"go-course-srs"`).
+Each `course.yaml` declares a `storagePrefix` (e.g., `"go-course"`) that namespaces all localStorage keys, so multiple courses coexist in the same browser without collisions. The `course-config.js` runtime helper exposes `storageKey(suffix)` which every other module uses to read/write its data (e.g., `storageKey('srs')` → `"go-course-srs"`).
 
-A course can set `"hidden": true` in its `course.json` to be excluded from the landing page while still being built and accessible via direct URL.
+A course can set `hidden: true` in its `course.yaml` to be excluded from the landing page while still being built and accessible via direct URL.
 
 ### Plugin system
 
@@ -460,18 +466,19 @@ The sidebar, dashboard nav pills, data backup, and `CourseConfig.plugins` array 
 
 `build.js` is the entire build system — a single Node script with four dependencies (marked, marked-highlight, highlight.js, js-yaml). No bundler, no framework, no transpilation. It runs once and produces a fully self-contained static site per course.
 
-1. **Discover courses** — scans `courses/` for directories containing a `course.json`
+1. **Discover courses** — scans `courses/` for directories containing a `course.yaml`
 2. **Discover plugins** — scans `engine/plugins/` for directories containing a `manifest.json`, sorted by `sidebarOrder`
 3. **Filter active plugins** — for each course, checks which plugins have matching content (e.g., a course with `content/real-world-challenges/real-world-challenges.yaml` gets the real-world-challenges plugin; a course without it doesn't)
 4. **Parse content** — reads markdown lessons, YAML exercises (`module*-variants.yaml`), and YAML flashcards (`flashcards.yaml`)
 5. **Render markdown** — converts lessons to HTML with syntax-highlighted code blocks via marked + highlight.js. A post-processor detects labeled code blocks (e.g., `*Python*` above a fenced block) and wraps consecutive labeled blocks in side-by-side comparison divs
 6. **Compute sidebar order** — builds an ordered page list from modules, with projects interleaved after their `afterModule` position, followed by active plugin pages. This powers both the sidebar navigation and prev/next buttons
-7. **Generate HTML** — injects rendered content into templates from `engine/templates/` (landing, dashboard, module, project) and active plugin templates. Modules with exercises get jump-link boxes injected after the Exercises heading
-8. **Build plugins** — for each active plugin: loads YAML content, runs optional build-time transforms (e.g., rendering markdown in challenge requirements), generates data JS files, processes HTML templates, copies plugin JS to dist
-9. **Compile data to JS** — converts exercise YAML to `data/module*-variants.js` (sets `window.moduleData`). Generates `concept-index.js` mapping exercise keys to concept names (includes both module exercises and algorithm problems). Also generates `course-data.js` (sets `window.CourseConfig` with all module metadata, tracks, computed sidebar, annotation types, and active plugin list)
-10. **Bundle** — copies engine JS files, CSS, theme files, and course assets into `dist/<slug>/`
-11. **Service worker** — generates `sw.js` with a manifest of every file in the build, using a cache-first strategy for instant loads and offline support
-12. **Landing page** — generates `dist/index.html` with a card for each non-hidden course
+7. **Process partials** — loads reusable HTML fragments from `engine/partials/` (head, dashboard-nav, rating-guide, session-nav, session-complete). Plugin templates use `{{> partial-name}}` directives to include shared UI blocks, with placeholders like `{{PREFIX}}` replaced per-plugin
+8. **Generate HTML** — injects rendered content into templates from `engine/templates/` (landing, dashboard, module, project) and active plugin templates. Modules with exercises get jump-link boxes injected after the Exercises heading
+9. **Build plugins** — for each active plugin: loads YAML content, runs optional build-time transforms (e.g., rendering markdown in challenge requirements), generates data JS files, processes HTML templates with partial expansion, copies plugin JS to dist
+10. **Compile data to JS** — converts exercise YAML to `data/module*-variants.js` (sets `window.moduleData`). Generates `concept-index.js` mapping exercise keys to concept names (includes both module exercises and algorithm problems). Also generates `course-data.js` (sets `window.CourseConfig` with all module metadata, tracks, computed sidebar, annotation types, and active plugin list)
+11. **Bundle** — copies engine JS files, CSS, theme files, and course assets into `dist/<slug>/`
+12. **Service worker** — generates `sw.js` with a manifest of every file in the build, using a cache-first strategy for instant loads and offline support
+13. **Landing page** — generates `dist/index.html` with a card for each non-hidden course
 
 The output is plain HTML/CSS/JS. Host it anywhere — GitHub Pages, Netlify, S3, a USB stick, `python3 -m http.server`.
 
