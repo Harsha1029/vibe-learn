@@ -16,6 +16,7 @@
 
     /** Extract module number from an exercise or flashcard key like "m2_warmup_1" or "fc_m1_0" */
     function extractModuleNum(key) {
+        if (key.indexOf('algo_') === 0) return 'algo';
         var match = key.match(/^(?:fc_)?m(\d+)_/);
         return match ? parseInt(match[1], 10) : null;
     }
@@ -24,6 +25,15 @@
     function prettifyKey(key, srsEntry) {
         // Use stored label if available
         if (srsEntry && srsEntry.label) return srsEntry.label;
+
+        // Algorithm keys: algo_arrays-hashing_two-sum_v1 -> "Algo — Two Sum v1"
+        var algoMatch = key.match(/^algo_([^_]+(?:-[^_]+)*)_([^_]+(?:-[^_]+)*)(?:_(v\d+))?$/);
+        if (algoMatch) {
+            var probId = algoMatch[2];
+            var varId = algoMatch[3] || '';
+            var probName = probId.replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+            return 'Algo \u2014 ' + probName + (varId ? ' ' + varId : '');
+        }
 
         // Exercise keys: m2_warmup_1 -> "Module 2 — Warmup 1"
         var exMatch = key.match(/^m(\d+)_(\w+?)_(\d+)$/);
@@ -148,13 +158,13 @@
         var modules = [];
         var moduleNums = Object.keys(moduleMap);
         for (var j = 0; j < moduleNums.length; j++) {
-            var num = parseInt(moduleNums[j], 10);
-            var data = moduleMap[num];
+            var num = moduleNums[j] === 'algo' ? 'algo' : parseInt(moduleNums[j], 10);
+            var data = moduleMap[moduleNums[j]];
             var avgEase = data.totalEase / data.count;
             var label = strengthLabel(avgEase, data.count);
             modules.push({
                 num: num,
-                name: MODULE_NAMES[num] || ('Module ' + num),
+                name: num === 'algo' ? 'Algorithms' : (MODULE_NAMES[num] || ('Module ' + num)),
                 avgEase: Math.round(avgEase * 10) / 10,
                 count: data.count,
                 mastered: data.mastered,
@@ -322,9 +332,11 @@
             var isTooEarly = mod.label === 'Too early';
             var pct = isTooEarly ? 0 : Math.min(100, Math.round((mod.avgEase / 3.0) * 100));
             var easeDisplay = isTooEarly ? '' : '<span style="color: var(--text-dim); font-size: 0.85rem; min-width: 4rem;">' + mod.avgEase + '</span>';
+            var modLabel = mod.num === 'algo' ? 'AL' : 'M' + mod.num;
+            var moduleLink = mod.num === 'algo' ? 'algorithms.html' : 'module' + mod.num + '.html';
             rankingsHTML +=
                 '<div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: var(--bg-card); border-radius: 6px; margin-bottom: 0.5rem; border-left: 3px solid ' + mod.color + ';">' +
-                    '<span style="color: var(--text-dim); min-width: 2rem;">M' + mod.num + '</span>' +
+                    '<a href="' + moduleLink + '" style="color: var(--text-dim); min-width: 2rem; text-decoration: none;">' + modLabel + '</a>' +
                     '<span style="flex: 1;">' + mod.name + '</span>' +
                     '<span style="color: var(--text-dim); font-size: 0.8rem;">' + mod.count + ' reviewed</span>' +
                     '<div style="width: 120px; height: 8px; background: var(--bg-lighter); border-radius: 4px; overflow: hidden;">' +
@@ -347,9 +359,11 @@
                 var cIsTooEarly = con.label === 'Too early';
                 var cPct = cIsTooEarly ? 0 : Math.min(100, Math.round((con.avgEase / 3.0) * 100));
                 var cEaseDisplay = cIsTooEarly ? '' : '<span style="color: var(--text-dim); font-size: 0.8rem; min-width: 3.5rem;">' + con.avgEase + '</span>';
+                var conLink = con.moduleNum === 'algo' ? 'algorithms.html' : 'module' + con.moduleNum + '.html';
+                var conLabel = con.moduleNum === 'algo' ? 'AL' : 'M' + con.moduleNum;
                 conceptHTML +=
                     '<div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; background: var(--bg-card); border-radius: 5px; margin-bottom: 0.4rem; border-left: 3px solid ' + con.color + '; font-size: 0.9rem;">' +
-                        '<a href="module' + con.moduleNum + '.html" style="color: var(--text-dim); min-width: 2rem; text-decoration: none;">M' + con.moduleNum + '</a>' +
+                        '<a href="' + conLink + '" style="color: var(--text-dim); min-width: 2rem; text-decoration: none;">' + conLabel + '</a>' +
                         '<span style="flex: 1;">' + con.concept + '</span>' +
                         '<span style="color: var(--text-dim); font-size: 0.75rem;">' + con.count + ' reviews</span>' +
                         '<div style="width: 100px; height: 6px; background: var(--bg-lighter); border-radius: 3px; overflow: hidden;">' +
