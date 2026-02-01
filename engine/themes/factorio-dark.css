@@ -627,7 +627,6 @@
 }
 
 /* Option buttons (flashcards, daily practice, algorithms) - active state must override base button styles */
-[data-theme="factorio-dark"] .dp-option.active,
 [data-theme="factorio-dark"] .session-option.active {
     background: linear-gradient(180deg, #ffd54f 0%, #fca311 50%, #d48806 100%);
     color: #131314;

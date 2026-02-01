@@ -8,6 +8,7 @@
 (function() {
     'use strict';
 
+    var SE = window.SessionEngine;
     var DATA = window.RealWorldChallengeData || {};
     var challenges = DATA.challenges || [];
     var STORAGE_KEY = window.CourseConfigHelper
@@ -316,9 +317,9 @@
         var container = document.getElementById(containerId);
         if (!container) return;
 
-        container.querySelectorAll('.rwc-filter-btn').forEach(function(btn) {
+        container.querySelectorAll('.session-option').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                container.querySelectorAll('.rwc-filter-btn').forEach(function(b) {
+                container.querySelectorAll('.session-option').forEach(function(b) {
                     b.classList.remove('active');
                 });
                 btn.classList.add('active');
@@ -346,14 +347,14 @@
 
         // "All" button
         var allBtn = document.createElement('button');
-        allBtn.className = 'rwc-filter-btn active';
+        allBtn.className = 'session-option active';
         allBtn.dataset.company = 'all';
         allBtn.textContent = 'All';
         container.appendChild(allBtn);
 
         sorted.forEach(function(company) {
             var btn = document.createElement('button');
-            btn.className = 'rwc-filter-btn';
+            btn.className = 'session-option';
             btn.dataset.company = company;
             btn.textContent = company;
             container.appendChild(btn);
@@ -365,19 +366,8 @@
     // =========================================================================
     // HELPERS
     // =========================================================================
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
-
-    function setText(id, text) {
-        var el = document.getElementById(id);
-        if (el) el.textContent = text;
-    }
+    var escapeHtml = SE.escapeHtml;
+    var setText = SE.setText;
 
     // =========================================================================
     // DASHBOARD INTEGRATION

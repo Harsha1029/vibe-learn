@@ -7,6 +7,7 @@
 (function() {
     'use strict';
 
+    var SE = window.SessionEngine;
     var FLASHCARD_DATA = window.FlashcardData || {};
     function getModuleNames() {
         return window.CourseConfigHelper ? window.CourseConfigHelper.moduleNames : {};
@@ -34,8 +35,8 @@
         }
 
         buildModuleButtons();
-        buildCountButtons();
-        buildModeButtons();
+        SE.setupOptionGroup('fc-count-options', 'session-option', config, 'count', parseInt);
+        SE.setupOptionGroup('fc-mode-options', 'session-option', config, 'mode');
     }
 
     function buildModuleButtons() {
@@ -44,10 +45,10 @@
         var MODULE_NAMES = getModuleNames();
 
         var allBtn = document.createElement('button');
-        allBtn.className = 'dp-option' + (config.moduleFilter === 'all' ? ' active' : '');
+        allBtn.className = 'session-option' + (config.moduleFilter === 'all' ? ' active' : '');
         allBtn.textContent = 'All';
         allBtn.onclick = function() {
-            setActiveInContainer(container, allBtn);
+            SE.setActiveOption('fc-module-options', 'session-option', allBtn);
             config.moduleFilter = 'all';
         };
         container.appendChild(allBtn);
@@ -56,63 +57,17 @@
         for (var i = 0; i < moduleIds.length; i++) {
             var m = moduleIds[i];
             var btn = document.createElement('button');
-            btn.className = 'dp-option' + (config.moduleFilter === m ? ' active' : '');
+            btn.className = 'session-option' + (config.moduleFilter === m ? ' active' : '');
             btn.textContent = 'M' + m;
             btn.title = MODULE_NAMES[m] || ('Module ' + m);
             btn.onclick = (function(moduleNum, button) {
                 return function() {
-                    setActiveInContainer(container, button);
+                    SE.setActiveOption('fc-module-options', 'session-option', button);
                     config.moduleFilter = moduleNum;
                 };
             })(m, btn);
             container.appendChild(btn);
         }
-    }
-
-    function buildCountButtons() {
-        var container = document.getElementById('fc-count-options');
-        if (!container) return;
-
-        var counts = [10, 20, 30];
-        counts.forEach(function(count) {
-            var btn = document.createElement('button');
-            btn.className = 'dp-option' + (count === 20 ? ' active' : '');
-            btn.textContent = count;
-            btn.onclick = function() {
-                setActiveInContainer(container, btn);
-                config.count = count;
-            };
-            container.appendChild(btn);
-        });
-    }
-
-    function buildModeButtons() {
-        var container = document.getElementById('fc-mode-options');
-        if (!container) return;
-
-        var modes = [
-            { value: 'random', label: 'Random' },
-            { value: 'due', label: 'Due for Review' },
-            { value: 'weak', label: 'Weakest' }
-        ];
-        modes.forEach(function(mode) {
-            var btn = document.createElement('button');
-            btn.className = 'dp-option' + (mode.value === 'random' ? ' active' : '');
-            btn.textContent = mode.label;
-            btn.onclick = function() {
-                setActiveInContainer(container, btn);
-                config.mode = mode.value;
-            };
-            container.appendChild(btn);
-        });
-    }
-
-    function setActiveInContainer(container, activeBtn) {
-        var btns = container.querySelectorAll('.dp-option');
-        for (var i = 0; i < btns.length; i++) {
-            btns[i].classList.remove('active');
-        }
-        activeBtn.classList.add('active');
     }
 
     // =========================================================================
@@ -273,10 +228,7 @@
     }
 
     function formatContent(text) {
-        var escaped = text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
+        var escaped = SE.escapeHtml(text);
         escaped = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
         escaped = escaped.replace(/\n/g, '<br>');
         return escaped;
@@ -390,7 +342,7 @@
         containers.forEach(function(id) {
             var el = document.getElementById(id);
             if (el) {
-                var btns = el.querySelectorAll('.dp-option');
+                var btns = el.querySelectorAll('.session-option');
                 btns.forEach(function(btn) { btn.classList.remove('active'); });
                 if (btns[0]) btns[0].classList.add('active');
             }
@@ -398,7 +350,7 @@
 
         var countEl = document.getElementById('fc-count-options');
         if (countEl) {
-            var countBtns = countEl.querySelectorAll('.dp-option');
+            var countBtns = countEl.querySelectorAll('.session-option');
             countBtns.forEach(function(btn) { btn.classList.remove('active'); });
             if (countBtns[1]) countBtns[1].classList.add('active');
         }
