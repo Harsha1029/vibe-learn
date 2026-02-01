@@ -207,6 +207,11 @@
     100% { transform: translateX(72px); }
 }
 
+@keyframes factorio-landing-belt {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-25%); }
+}
+
 /* Industrial code blocks - blueprint style */
 [data-theme="factorio-dark"] .code-block,
 [data-theme="factorio-dark"] .code-labeled,
@@ -1018,6 +1023,50 @@
     animation: factorio-belt 0.25s linear infinite;
     pointer-events: none;
 }
+/* Belt resource items */
+[data-theme="factorio-dark"] .landing .belt-items {
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: -2rem;
+    right: -2rem;
+    height: 14px;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+}
+[data-theme="factorio-dark"] .landing .belt-items-scroll {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    height: 100%;
+    width: max-content;
+    animation: factorio-landing-belt 20s linear infinite;
+}
+[data-theme="factorio-dark"] .landing .belt-items-scroll span {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 10px;
+    padding: 0 3px;
+    font-size: 7px;
+    font-weight: bold;
+    border-radius: 2px;
+    font-family: 'Share Tech Mono', monospace;
+    color: #fff;
+    line-height: 1;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+    opacity: 0.85;
+}
+[data-theme="factorio-dark"] .landing .belt-items-scroll span:nth-child(8n+1) { background: #5577CC; }
+[data-theme="factorio-dark"] .landing .belt-items-scroll span:nth-child(8n+2) { background: #00ACD7; }
+[data-theme="factorio-dark"] .landing .belt-items-scroll span:nth-child(8n+3) { background: #CE6A32; }
+[data-theme="factorio-dark"] .landing .belt-items-scroll span:nth-child(8n+4) { background: #326CE5; }
+[data-theme="factorio-dark"] .landing .belt-items-scroll span:nth-child(8n+5) { background: #3776AB; }
+[data-theme="factorio-dark"] .landing .belt-items-scroll span:nth-child(8n+6) { background: #F0DB4F; color: #333; }
+[data-theme="factorio-dark"] .landing .belt-items-scroll span:nth-child(8n+7) { background: #3178C6; }
+[data-theme="factorio-dark"] .landing .belt-items-scroll span:nth-child(8n+8) { background: #E48E00; }
 
 [data-theme="factorio-dark"] .landing .features {
     border: none;
