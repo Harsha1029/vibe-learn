@@ -10,7 +10,7 @@ A self-hosted, static course platform. Write your lessons in markdown, define ex
 
 | Course | Modules | Status |
 |--------|---------|--------|
-| **Go** | 18 modules + 4 projects | Complete |
+| **Go** | 19 modules + 4 projects | Complete |
 | **C** | 18 modules + 4 projects | Scaffold (content coming soon) |
 | **Kubernetes & Helm** | 22 modules + 8 projects | Hidden — content written, exercises not reviewed |
 | **Rust** | 18 modules + 2 projects | Scaffold (content coming soon) |
@@ -26,7 +26,7 @@ A self-hosted, static course platform. Write your lessons in markdown, define ex
 - **Thinking timer** — configurable countdown that locks hints/solutions so you attempt the problem first
 - **Flashcards** with flip/rate sessions, keyboard shortcuts, and multiple review modes (random, due, weakest)
 - **Spaced repetition (SRS)** — SM-2 algorithm scheduling for both exercises and flashcards
-- **Daily practice** — swipe-style sessions with smart mode selection: review due items, drill weak spots, mixed, or discover new exercises (includes both module exercises and algorithm problems)
+- **Daily practice** — swipe-style sessions with smart mode selection: review due items, drill weak spots, mixed, or discover new exercises from across all modules
 - **Algorithm practice** — session-based algorithm drills across 10 categories (arrays & hashing, two pointers, sliding window, stack, binary search, linked list, trees, dynamic programming, greedy, backtracking). 52 problems with 156 variants at progressive difficulty. SRS-integrated with discover, review, weakest, and mixed modes. Features: **structured progression** (mastery bars per category, difficulty gating — medium unlocks at 70% easy mastery, hard at 70% medium), **blind mode** (hides hints/solutions during practice — self-grade then reveal), and **pattern recognition drills** (multiple-choice "which pattern solves this?" sessions with accuracy tracking)
 - **Real-world challenges** — open-ended engineering problems inspired by real company interviews, with requirements, hints, acceptance criteria (interactive checkboxes), source attribution, and company tags. No solutions provided.
 - **Pomodoro timer** — session timer with presets (25/5, 50/10, 90/20) and break reminders
@@ -312,59 +312,114 @@ Users switch themes from a button in the sidebar. Selection persists in localSto
 
 ## Architecture
 
+### Build pipeline
+
 ```
-                        BUILD TIME                                    RUNTIME (browser)
- ┌──────────────────────────────────────────────────┐  ┌────────────────────────────────────────────┐
- │                                                  │  │                                            │
- │  courses/<slug>/           build.js              │  │  ┌──────────┐  ┌─────────────────────────┐ │
- │  ├─ course.json ──────┐   (marked +              │  │  │ module   │  │ Exercise Engine         │ │
- │  └─ content/          │    marked-highlight +     │  │  │ pages    │─>│                         │ │
- │     ├─ lessons/*.md ──┤    highlight.js +         │  │  │ project  │  │ course.js               │ │
- │     ├─ exercises/     │    js-yaml)               │  │  │ pages    │  │ exercise-renderer.js    │ │
- │     │  └─ module*-  ──┤                           │  │  │ (.html)  │  │ module-loader.js        │ │
- │     │     variants. ──┤                           │  │  └──────────┘  └───────────┬─────────────┘ │
- │     │     yaml        │                           │  │                            │               │
- │     ├─ flashcards/  ──┤         ┌──────────────┐  │  │                            v               │
- │     │  └─ flashcards. │         │ Plugin       │  │  │  ┌────────────────────────────────────────┐│
- │     │     yaml      ──┤         │ Discovery    │  │  │  │           localStorage                 ││
- │     ├─ real-world-  ──┤         │              │  │  │  │                                        ││
- │     │   challenges/   │         │ For each     │  │  │  │  <prefix>-progress                     ││
- │     │   └─ *.yaml   ──┤         │ plugin in    │  │  │  │  <prefix>-exercise-progress             ││
- │     └─ assets/* ──────┘         │ engine/      │  │  │  │  <prefix>-srs                          ││
- │                                 │ plugins/:    │  │  │  │  <prefix>-streaks / activity           ││
- │  engine/                        │              │  │  │  │  <prefix>-personal-notes               ││
- │  ├─ templates/                  │ 1. Read      │  │  │  │  <prefix>-last-module / theme          ││
- │  │  ├─ landing.html             │    manifest  │  │  │  │  <prefix>-real-world-challenges        ││
- │  │  ├─ index.html               │ 2. Check     │  │  │  └────────────────────────────────────────┘│
- │  │  ├─ module.html              │    content   │  │  │       ^          ^            ^            │
- │  │  └─ project.html             │    pattern   │  │  │       │          │            │            │
- │  │                              │ 3. Load YAML │  │  │  ┌────┴───┐ ┌───┴──────┐ ┌───┴──────────┐│
- │  ├─ plugins/                    │ 4. Run build │  │  │  │ SRS    │ │Flashcard │ │Daily Practice││
- │  │  ├─ flashcards/    ─────────>│    transform │  │  │  │ (SM-2) │ │Engine    │ │& Analytics   ││
- │  │  ├─ daily-practice/─────────>│ 5. Generate  │  │  │  │srs.js  │ │flashcard-│ │daily-        ││
- │  │  ├─ analytics/     ─────────>│    data JS   │  │  │  └────────┘ │engine.js │ │practice.js   ││
- │  │  ├─ algorithms/   ─────────>│ 6. Process   │  │  │             └──────────┘ │analytics.js  ││
- │  │  └─ real-world-   ─────────>│    template  │  │  │                          └──────────────┘│
- │  │     challenges/              │ 7. Copy JS   │  │  │                                          │
- │  │  Plugin anatomy:             └──────┬───────┘  │  │  ┌────────────────────────────────────┐   │
- │  │  ├─ manifest.json                   │          │  │  │ UI layer                          │   │
- │  │  ├─ <name>.html     ┌──────────────────────┐  │  │  │ sidebar.js    — navigation        │   │
- │  │  ├─ <name>.js        │  Per-course output:  │  │  │  │ theme.js      — themes + pomodoro │   │
- │  │  └─ build.js (opt.)  │  dist/<slug>/        │─>│  │  │ streaks.js    — streaks + heatmap │   │
- │  │                      │  ├─ index.html       │  │  │  │ dashboard.js  — stats + resume    │   │
- │  ├─ js/               ─>│  ├─ module*.html     │  │  │  │ data-backup.js— export/import     │   │
- │  ├─ css/style.css ─────>│  ├─ project*.html    │  │  │  │ progress.js   — exercise tracking │   │
- │  └─ themes/*.css ──────>│  ├─ <plugin>.html    │  │  │  └────────────────────────────────────┘   │
- │                         │  ├─ <plugin>-data.js  │  │  │                                          │
- │  Also generates:        │  ├─ course-data.js   │  │  │  ┌────────────────────────────────────┐   │
- │  dist/index.html        │  ├─ data/module*-    │  │  │  │ Real-World Challenges              │   │
- │  (landing page)         │  │    variants.js    │  │  │  │ real-world-challenges.js            │   │
- │                         │  ├─ *.js (engine)    │  │  │  │ Tracks: status, checked criteria    │   │
- │                         │  ├─ style.css        │  │  │  └────────────────────────────────────┘   │
- │                         │  ├─ themes/          │  │  │                                          │
- │                         │  └─ sw.js            │  │  │                                          │
- │                         └──────────────────────┘  │  │                                          │
- └───────────────────────────────────────────────────┘  └──────────────────────────────────────────┘
+ courses/<slug>/                engine/
+ ├─ course.json                 ├─ templates/
+ ├─ content/                    │  ├─ landing.html
+ │  ├─ lessons/*.md             │  ├─ index.html
+ │  ├─ exercises/               │  ├─ module.html
+ │  │  └─ *-variants.yaml      │  └─ project.html
+ │  ├─ flashcards/              ├─ js/*.js
+ │  │  └─ flashcards.yaml      ├─ css/style.css
+ │  ├─ algorithms/              ├─ themes/*.css
+ │  │  └─ algorithms.yaml      └─ plugins/
+ │  ├─ real-world-challenges/      ├─ flashcards/
+ │  │  └─ *.yaml                   ├─ daily-practice/
+ │  └─ assets/*                    ├─ analytics/
+        │                          ├─ algorithms/
+        │                          └─ real-world-challenges/
+        │                                   │
+        ▼                                   ▼
+ ┌─────────────────────────────────────────────────┐
+ │                    build.js                      │
+ │         marked · highlight.js · js-yaml          │
+ │                                                  │
+ │  1. Discover courses (scan courses/)             │
+ │  2. Discover plugins (scan engine/plugins/)      │
+ │  3. Filter active plugins per course             │
+ │  4. Parse markdown + YAML content                │
+ │  5. Render HTML with syntax highlighting         │
+ │  6. Build plugin data (transforms, templates)    │
+ │  7. Compile exercise YAML → JS data files        │
+ │  8. Bundle engine JS, CSS, themes, assets        │
+ │  9. Generate service worker manifest             │
+ └──────────────────────┬──────────────────────────┘
+                        ▼
+              dist/<slug>/
+              ├─ index.html
+              ├─ module*.html
+              ├─ project*.html
+              ├─ <plugin>.html
+              ├─ course-data.js
+              ├─ concept-index.js
+              ├─ data/module*-variants.js
+              ├─ flashcard-data.js
+              ├─ algorithm-data.js
+              ├─ *.js (engine + plugins)
+              ├─ style.css + themes/
+              └─ sw.js
+```
+
+### Runtime modules
+
+```
+ ┌─────────────────────────────────────────────────────────────┐
+ │                     RUNTIME (browser)                       │
+ │                                                             │
+ │  ┌─ Exercise Engine ──────────────────────────────────────┐ │
+ │  │  module-loader.js  loads data/module*-variants.js      │ │
+ │  │  exercise-core.js  shuffle, variants, difficulty modes │ │
+ │  │  course.js         renders exercises on module pages   │ │
+ │  │  exercise-renderer.js  hints, solutions, annotations   │ │
+ │  └────────────────────────────┬───────────────────────────┘ │
+ │                               │ rates                       │
+ │                               ▼                             │
+ │  ┌─ Practice & Review ───────────────────────────────────┐  │
+ │  │                                                       │  │
+ │  │  session-engine.js   shared session lifecycle         │  │
+ │  │       ▲         ▲                                     │  │
+ │  │       │         │                                     │  │
+ │  │  daily-      algorithms.js   flashcard-engine.js      │  │
+ │  │  practice.js  (arena sessions,  (flip/rate,           │  │
+ │  │  (review,      progression,      SRS-due,             │  │
+ │  │   discover,    blind mode,       random)              │  │
+ │  │   weak,        pattern drills)                        │  │
+ │  │   mixed)                                              │  │
+ │  │       │         │                  │                  │  │
+ │  │       └─────────┼──────────────────┘                  │  │
+ │  │                 ▼                                     │  │
+ │  │           srs.js (SM-2)                               │  │
+ │  └────────────┬──────────────────────────────────────────┘  │
+ │               │                                             │
+ │  ┌─ UI Layer ─┼──────────────────────────────────────────┐  │
+ │  │            │                                          │  │
+ │  │  sidebar.js       navigation + plugin links           │  │
+ │  │  dashboard.js     stats, resume, module progress      │  │
+ │  │  analytics.js     weak concepts, strength rankings    │  │
+ │  │  theme.js         10 themes + pomodoro timer          │  │
+ │  │  streaks.js       streak tracking + activity heatmap  │  │
+ │  │  progress.js      per-exercise state tracking         │  │
+ │  │  data-backup.js   export/import all data              │  │
+ │  │  real-world-challenges.js  challenge cards + status   │  │
+ │  └────────────┼──────────────────────────────────────────┘  │
+ │               ▼                                             │
+ │  ┌─ localStorage ────────────────────────────────────────┐  │
+ │  │  All keys prefixed with course storagePrefix          │  │
+ │  │                                                       │  │
+ │  │  <prefix>-progress          module completion flags   │  │
+ │  │  <prefix>-exercise-progress per-exercise state        │  │
+ │  │  <prefix>-srs               SM-2 scheduler data      │  │
+ │  │  <prefix>-streaks           current + longest streak  │  │
+ │  │  <prefix>-activity          daily counts (heatmap)    │  │
+ │  │  <prefix>-personal-notes    user notes per exercise   │  │
+ │  │  <prefix>-real-world-challenges  status + criteria    │  │
+ │  │  <prefix>-algo-pattern-stats     drill accuracy       │  │
+ │  │  <prefix>-last-module       resume button target      │  │
+ │  │  theme                      selected theme (shared)   │  │
+ │  └───────────────────────────────────────────────────────┘  │
+ └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Course discovery
@@ -478,7 +533,7 @@ All JavaScript runs in the browser with no framework. Scripts communicate throug
 | File | What it does |
 |------|-------------|
 | `flashcard-engine.js` | Flashcard session manager. Builds decks filtered by module, supports random and SRS-due ordering, handles flip animation and rate interaction |
-| `daily-practice.js` | Builds exercise queues from SRS data. Four modes: review (due items), discover (random new), weak (lowest ease factor), mixed (due + weak). Includes both module exercises and algorithm problems. Dynamically loads module variant data as needed. Delegates session lifecycle to `session-engine.js` |
+| `daily-practice.js` | Builds exercise queues from SRS data across all modules. Four modes: review (due items), discover (random new), weak (lowest ease factor), mixed (due + weak). Dynamically loads module variant data as needed. Delegates session lifecycle to `session-engine.js` |
 | `algorithms.js` | Session-based algorithm practice. Builds queues from AlgorithmData across 10 categories with discover/review/weakest/mixed modes. SRS key format: `algo_{categoryId}_{problemId}_{variantId}`. Three differentiating features: **structured progression** (category cards with mastery bars, per-tier unlock gating at 70% thresholds), **blind mode** (hides hints/solutions, self-grade then reveal), and **pattern recognition drills** (multiple-choice concept identification with distractor generation and accuracy tracking). Delegates session lifecycle to `session-engine.js` |
 | `analytics.js` | Weak concept report. Groups SRS data by module (including algorithm categories as pseudo-module "Algorithms"), computes average ease factor, classifies strength (strong/good/moderate/weak/too early), shows per-concept breakdown with algorithm concepts from ConceptIndex, lists weakest individual exercises. Formats `algo_` keys for display and links to `algorithms.html` |
 | `real-world-challenges.js` | Renders challenge cards with difficulty, company/concept tags, source attribution, collapsible requirements/hints/acceptance criteria (interactive checkboxes), and status tracking (not-started / in-progress / completed) |
