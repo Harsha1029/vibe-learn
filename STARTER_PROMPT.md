@@ -1,6 +1,6 @@
 # vibe-learn — Course Generator Prompt
 
-Paste this entire file into Claude Code, Cursor, Copilot, or any AI coding tool to generate a complete course.
+Paste this entire file into Claude Code, Cursor, Copilot, Augment, or any AI coding tool to generate a complete course.
 
 ## Your Course Configuration
 

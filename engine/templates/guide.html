@@ -432,7 +432,7 @@ $ npm run build</div>
                     <span class="fp">courses/&lt;slug&gt;/</span> with a minimal <span class="fp">course.yaml</span>,
                     a starter lesson, and the directory structure for exercises, flashcards, and assets.</li>
                 <li><strong>Generate content.</strong> Open <span class="fp">STARTER_PROMPT.md</span> and paste it into
-                    Claude Code, Cursor, Copilot, or any AI coding tool. It contains full schemas for every content type.
+                    Claude Code, Cursor, Copilot, Augment, or any AI coding tool. It contains full schemas for every content type.
                     The AI generates lessons, exercises, flashcards, and optional extras. See <a href="#ai-tools">section 2</a> for tool-specific workflows.</li>
                 <li><strong>Build.</strong> <span class="fp">npm run build</span> compiles markdown + YAML into a
                     self-contained static site. Output goes to <span class="fp">dist/</span>. Host it anywhere.</li>
@@ -547,6 +547,17 @@ $ npm run build</div>
                 <p>Windsurf's Cascade mode handles multi-file generation. Open the project, start a Cascade flow,
                    and paste <span class="fp">STARTER_PROMPT.md</span> with your topic. Cascade creates the files
                    and you can review diffs before accepting.</p>
+            </div>
+
+            <!-- Augment -->
+            <div class="tool-card" id="tool-augment">
+                <h4>Augment</h4>
+                <div class="tool-cmd">IDE chat or Auggie (terminal agent)</div>
+                <p>Use the Augment chat panel in your IDE, or run <span class="fp">auggie</span> in the terminal
+                   for an agentic workflow similar to Claude Code. Either way, reference
+                   <span class="fp">STARTER_PROMPT.md</span> and describe your course topic. Augment generates
+                   the files across the course directory. Review the output and run
+                   <span class="fp">npm run build</span>.</p>
             </div>
 
             <!-- Other tools -->
