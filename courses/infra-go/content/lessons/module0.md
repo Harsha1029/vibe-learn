@@ -16,6 +16,30 @@ The course is five tracks. Each track builds on the last, but not every module w
 
 **Track 5 (Modules 12-13)** is interview prep and open source. The algorithms plugin gives you practice throughout the course, so Module 12 is reinforcement, not a cold start.
 
+### Working through a module
+
+Each module has a **lesson**, **warmups**, and **challenges**. Here's the flow:
+
+1. **Read the lesson first.** Skim the whole thing, then come back to sections you need.
+2. **Do the warmups.** These are quick drills — one concept each, multiple variants. Use the concept filter to focus on areas you're shaky on, or just go through them all. If a warmup feels hard, the gap is in the lesson — go re-read that section.
+3. **Move to challenges.** These are deeper, multi-step problems. Pick a difficulty mode:
+   - **Easy** — only difficulty 1 variants. Start here if the module is new territory.
+   - **Progressive** — starts easy, ramps up as you go. Good default for a first pass.
+   - **Balanced** — weighted mix (35% easy, 40% medium, 25% hard). Best for review.
+   - **Hard** — difficulty 3+ only. Use this when you're confident and want to test yourself.
+   - **Mixed** — fully random. Good for simulating real-world unpredictability.
+4. **Self-rate honestly.** After viewing a solution, rate yourself: *Got it*, *Struggled*, or *Needed solution*. These ratings drive spaced repetition — honest ratings mean better review scheduling.
+
+Every exercise has multiple variants, so you can shuffle and get a fresh version of the same concept. Use the shuffle button liberally. If a challenge is too hard, hit "Get Easier Version" to step down a difficulty level (and "Get Harder Version" when you're ready to push).
+
+### The thinking timer
+
+When you open an exercise, you'll see a thinking timer option. It locks the hints and solution for 45 seconds, forcing you to actually think before reaching for help. Use it. The point of exercises is the struggle, not the answer.
+
+### Daily practice and review
+
+Your self-ratings feed into a spaced repetition system. Exercises you struggled with come back sooner; ones you nailed fade into longer intervals. Use **Daily Practice** to stay sharp across modules — it pulls exercises that are due for review or that you've historically found hard.
+
 ### When you're stuck
 
 - **Warmups are the canary.** If warmups are hard, the gap is in the lesson, not the exercise. Re-read.
@@ -241,23 +265,19 @@ func main() {
 
 Things you'll reach for instinctively and need the Go equivalent:
 
-```
-Python                          Go
-─────────────────────────────── ───────────────────────────────────────────
-if x in list                    Loop + compare, or use map[T]bool
-list.append(x)                  s = append(s, x)          ← must reassign!
-list[-1]                        s[len(s)-1]                ← no negative indexing
-", ".join(list)                 strings.Join(s, ", ")
-s.split(",")                    strings.Split(s, ",")
-s.strip()                       strings.TrimSpace(s)
-f"hello {name}"                 fmt.Sprintf("hello %s", name)
-try/except                      if err != nil              ← errors are values
-dict.get(k, default)            v, ok := m[k]              ← comma-ok pattern
-len(x)                          len(x)                     ← same!
-for i, v in enumerate(x)       for i, v := range x
-sorted(x, key=...)             sort.Slice(x, func(i,j int) bool {...})
-[x for x in items if ...]      Loop + append + if         ← no comprehensions
-None                            nil                        ← pointers, interfaces, maps, slices
-@dataclass                      type X struct { ... }      ← write your own constructor
-isinstance(x, T)                v, ok := x.(T)             ← type assertion
-```
+- **Check if item is in a list** — Loop + compare, or use `map[T]bool`. There's no `in` keyword.
+- **Append to a list** — `s = append(s, x)`. You must reassign — `append` may allocate a new array.
+- **Last element** — `s[len(s)-1]`. No negative indexing.
+- **Join strings** — `strings.Join(s, ", ")`
+- **Split a string** — `strings.Split(s, ",")`
+- **Trim whitespace** — `strings.TrimSpace(s)`
+- **String formatting** — `fmt.Sprintf("hello %s", name)`. No f-strings.
+- **Error handling** — `if err != nil { ... }`. No try/except — errors are values.
+- **Dict get with default** — `v, ok := m[k]` (comma-ok pattern). Check `ok` yourself.
+- **Length** — `len(x)`. Same as Python.
+- **Enumerate** — `for i, v := range x`
+- **Sort with key** — `sort.Slice(x, func(i, j int) bool { ... })`
+- **List comprehension** — Loop + append + if. No comprehensions in Go.
+- **None** — `nil`. Works for pointers, interfaces, maps, slices, channels.
+- **Dataclass** — `type X struct { ... }`. Write your own constructor function.
+- **isinstance** — `v, ok := x.(T)` (type assertion).
