@@ -192,8 +192,10 @@ variants:
             }
           annotations:
             - type: pattern
+              label: Command + Mutex Server
               text: Command parsing + shared state with RWMutex — the foundation of any TCP protocol server
             - type: idiom
+              label: RWMutex Read-Heavy
               text: "RWMutex for read-heavy workloads: multiple concurrent readers, exclusive writers"
         - id: v2
           title: Concurrent TCP Chat Server
@@ -265,8 +267,10 @@ variants:
             }
           annotations:
             - type: pattern
+              label: Client Broadcast Pattern
               text: "Broadcast pattern: mutex-protected client set, iterate and write to each connection"
             - type: gotcha
+              label: Stale Conn Detection
               text: Writing to a disconnected conn returns an error — use that to detect and clean up stale clients
         - id: v3
           title: TCP Connection Pool
@@ -346,8 +350,10 @@ variants:
             }
           annotations:
             - type: pattern
+              label: Channel-Based Pool
               text: Buffered channel as a pool — channel size = max connections. Get/Put = receive/send.
             - type: interview
+              label: Pool Design Question
               text: Connection pooling is a common systems design interview topic — understand the channel-based approach
     - id: challenge_2
       block: 2
@@ -390,6 +396,7 @@ variants:
             }
           annotations:
             - type: stdlib
+              label: Binary Encoding Helpers
               text: encoding/binary.BigEndian for multi-byte fields, raw byte manipulation for variable-length labels
         - id: v2
           title: Build DNS A Record Response
@@ -446,8 +453,10 @@ variants:
             }
           annotations:
             - type: pattern
+              label: DNS Response Layout
               text: "DNS response construction: header → question (copied from query) → answer records"
             - type: gotcha
+              label: Name Pointer 0xC00C
               text: >-
                 0xC00C is a pointer to offset 12 (start of question name). Pointer compression avoids repeating the
                 domain name.
@@ -527,8 +536,10 @@ variants:
             }
           annotations:
             - type: interview
+              label: DNS Resolver Deep Dive
               text: >-
                 Building a DNS resolver from scratch demonstrates deep protocol understanding — impressive in systems
                 interviews
             - type: complexity
+              label: Query Time Cost
               text: O(1) for a single query, but real resolvers cache results and handle retries

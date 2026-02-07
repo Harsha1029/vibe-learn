@@ -165,6 +165,7 @@ variants:
             }
           annotations:
             - type: stdlib
+              label: json.NewEncoder
               text: json.NewEncoder writes directly to any io.Writer — ResponseWriter implements io.Writer
         - id: v2
           title: Readiness with Dependency Checks
@@ -206,8 +207,10 @@ variants:
             }
           annotations:
             - type: pattern
+              label: Aggregate Health Checks
               text: Check all dependencies and aggregate — partial health gives operators more info than fail-fast
             - type: interview
+              label: K8s Health Checks
               text: Health endpoints with dependency checks are standard K8s interview topics
         - id: v3
           title: Health Server with Timeouts
@@ -275,8 +278,10 @@ variants:
             }
           annotations:
             - type: pattern
+              label: Concurrent Timeout Checks
               text: Concurrent dependency checks with per-check timeout — combines goroutines, context, and channels
             - type: gotcha
+              label: DeadlineExceeded Check
               text: Always check context.DeadlineExceeded to distinguish timeouts from other errors
     - id: challenge_2
       block: 2
@@ -309,6 +314,7 @@ variants:
             }
           annotations:
             - type: idiom
+              label: Middleware Signature
               text: func(next http.Handler) http.Handler is THE middleware signature in Go
         - id: v2
           title: Per-IP Rate Limiter
@@ -364,8 +370,10 @@ variants:
             }
           annotations:
             - type: pattern
+              label: Closure-Based Middleware
               text: Configurable middleware with closure captures config, mutex protects shared state
             - type: gotcha
+              label: RemoteAddr Includes Port
               text: r.RemoteAddr includes port (e.g. 10.0.0.1:54321) — in production, parse the IP or use X-Forwarded-For
         - id: v3
           title: Middleware Chain Builder
@@ -412,6 +420,8 @@ variants:
             http.ListenAndServe(":8080", pipeline(mux))
           annotations:
             - type: pattern
+              label: Middleware Composition
               text: Middleware composition — reverse iteration makes Chain(a,b,c)(h) = a(b(c(h))), so request flows a→b→c→h
             - type: interview
+              label: Middleware Ordering
               text: Understanding middleware ordering and composition is a common Go web interview topic

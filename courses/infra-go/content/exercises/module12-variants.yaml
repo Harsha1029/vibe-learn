@@ -197,8 +197,10 @@ variants:
             }
           annotations:
             - type: complexity
+              label: Linear Scan
               text: O(n) time, O(n) space for the seen map
             - type: interview
+              label: Order-Preserving Dedup
               text: Deduplication preserving order is a classic easy interview question
         - id: v2
           title: Pod Pair Finder
@@ -245,8 +247,10 @@ variants:
             }
           annotations:
             - type: complexity
+              label: Hash Map Lookup
               text: O(n) average case with hash map lookups
             - type: pattern
+              label: Two Sum Variant
               text: "Two Sum variant: complement lookup in a map, with deduplication via a used set"
         - id: v3
           title: Log Analyzer Pipeline
@@ -303,8 +307,10 @@ variants:
             }
           annotations:
             - type: complexity
+              label: Nested Iteration
               text: O(n * m) where n=log lines, m=average words per message
             - type: pattern
+              label: Parse-Group-Aggregate
               text: "Parse → Group → Aggregate: a pipeline of map operations, very common in data processing"
     - id: challenge_2
       block: 2
@@ -346,8 +352,10 @@ variants:
             }
           annotations:
             - type: complexity
+              label: Single Pass
               text: O(n) time, O(1) space — single pass
             - type: pattern
+              label: Variable Window
               text: "Variable sliding window: expand right, reset left on constraint violation"
         - id: v2
           title: Max Requests in Time Window
@@ -382,8 +390,10 @@ variants:
             }
           annotations:
             - type: complexity
+              label: Amortized Linear
               text: O(n) — each pointer moves forward at most n times
             - type: interview
+              label: Rate Limiting Window
               text: Rate limiting / sliding window on timestamps is a common systems design interview question
         - id: v3
           title: Minimum Window Covering All Services
@@ -445,6 +455,8 @@ variants:
             }
           annotations:
             - type: complexity
+              label: Two-Pointer Linear
               text: O(n) time — classic minimum window substring, each pointer moves at most n times
             - type: interview
+              label: Min Window Substring
               text: Minimum window substring is a LeetCode hard and a common interview question — know this pattern cold

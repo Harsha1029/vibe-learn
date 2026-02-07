@@ -1,6 +1,6 @@
 ## Project Goals
 
-Build a CLI tool that reads Kubernetes and Terraform YAML files, validates them against a set of rules, and reports violations with file, line, and severity.
+Build a CLI tool that reads Kubernetes YAML files, validates them against a set of rules, and reports violations with file, line, and severity.
 
 You've practiced all the pieces — now compose them into a real tool.
 

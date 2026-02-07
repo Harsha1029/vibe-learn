@@ -1,5 +1,3 @@
-# Project 4: Mini Container Runtime
-
 Build a minimal container runtime using Linux namespaces and cgroups. Run a process in an isolated environment with resource limits.
 
 ---

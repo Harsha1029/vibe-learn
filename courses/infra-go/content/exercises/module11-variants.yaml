@@ -157,6 +157,7 @@ variants:
             }
           annotations:
             - type: idiom
+              label: All Namespaces
               text: Empty namespace string means all namespaces — a common client-go pattern
         - id: v2
           title: ConfigMap Sync Controller
@@ -223,8 +224,10 @@ variants:
             }
           annotations:
             - type: pattern
+              label: Create-or-Update
               text: "Create-or-Update: Get → NotFound? Create : changed? Update. The core K8s reconciliation pattern."
             - type: gotcha
+              label: IsNotFound Check
               text: Always check errors.IsNotFound(err) — don't assume a Get error means the resource doesn't exist
         - id: v3
           title: Operator Reconciler with Finalizer
@@ -308,10 +311,13 @@ variants:
             }
           annotations:
             - type: pattern
+              label: Reconciler Lifecycle
               text: "Full operator reconcile: finalizer → cleanup on delete → ensure owned resources → update status"
             - type: interview
+              label: Finalizer Reconciler
               text: Writing a complete reconciler with finalizers is a senior K8s/Go interview question
             - type: gotcha
+              label: Status Subresource
               text: >-
                 Update the status subresource separately with Status().Update() — regular Update() ignores status
                 changes
