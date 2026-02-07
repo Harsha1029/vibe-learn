@@ -1,0 +1,534 @@
+conceptLinks:
+  TCP: "#tcp-from-scratch"
+  UDP: "#udp-basics"
+  DNS Wire Format: "#the-dns-wire-format"
+  DNS Server: "#building-a-dns-server"
+  gRPC: "#grpc--protocol-buffers"
+sharedContent: {}
+variants:
+  warmups:
+    - id: warmup_1
+      concept: TCP
+      variants:
+        - id: v1
+          title: TCP Echo Handler
+          description: >-
+            Write a TCP connection handler that reads lines with <code>bufio.Scanner</code> and echoes each line back.
+            Close the connection when the client sends <code>"QUIT"</code>.
+          hints:
+            - Use <code>bufio.NewScanner(conn)</code> to read lines, <code>fmt.Fprintln(conn, line)</code> to write back
+            - Remember <code>defer conn.Close()</code>
+          solution: |-
+            func handleConn(conn net.Conn) {
+                defer conn.Close()
+                scanner := bufio.NewScanner(conn)
+                for scanner.Scan() {
+                    line := scanner.Text()
+                    if line == "QUIT" {
+                        fmt.Fprintln(conn, "BYE")
+                        return
+                    }
+                    fmt.Fprintln(conn, line)
+                }
+            }
+        - id: v2
+          title: TCP Client with Timeout
+          description: >-
+            Write a function that connects to a TCP server with a 5-second timeout using <code>net.DialTimeout</code>.
+            Send a message and read the response.
+          hints:
+            - Use <code>net.DialTimeout("tcp", addr, 5*time.Second)</code>
+            - Read with <code>bufio.NewReader(conn).ReadString('\n')</code>
+          solution: |-
+            func sendMessage(addr, msg string) (string, error) {
+                conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
+                if err != nil {
+                    return "", err
+                }
+                defer conn.Close()
+                fmt.Fprintln(conn, msg)
+                reply, err := bufio.NewReader(conn).ReadString('\n')
+                return strings.TrimSpace(reply), err
+            }
+    - id: warmup_2
+      concept: UDP
+      variants:
+        - id: v1
+          title: UDP Echo Server
+          description: >-
+            Write a UDP server that reads packets and sends back <code>"ACK: "</code> + the received message to the
+            sender.
+          hints:
+            - Use <code>net.ListenPacket("udp", addr)</code> to listen
+            - Read with <code>pc.ReadFrom(buf)</code>, respond with <code>pc.WriteTo(response, addr)</code>
+          solution: |-
+            func udpEcho(addr string) error {
+                pc, err := net.ListenPacket("udp", addr)
+                if err != nil {
+                    return err
+                }
+                defer pc.Close()
+                buf := make([]byte, 1024)
+                for {
+                    n, sender, err := pc.ReadFrom(buf)
+                    if err != nil {
+                        return err
+                    }
+                    msg := string(buf[:n])
+                    pc.WriteTo([]byte("ACK: "+msg), sender)
+                }
+            }
+    - id: warmup_3
+      concept: DNS Wire Format
+      variants:
+        - id: v1
+          title: Encode Domain Name
+          description: >-
+            Write a function that encodes a domain name (like <code>"example.com"</code>) into DNS wire format:
+            length-prefixed labels ending with a null byte. Example: <code>"example.com"</code> →
+            <code>[7]example[3]com[0]</code>.
+          hints:
+            - >-
+              Split on <code>"."</code>, then for each label: append <code>byte(len(label))</code> then
+              <code>[]byte(label)</code>. End with <code>0</code>.
+          solution: |-
+            func encodeDomain(domain string) []byte {
+                var buf []byte
+                for _, label := range strings.Split(domain, ".") {
+                    buf = append(buf, byte(len(label)))
+                    buf = append(buf, []byte(label)...)
+                }
+                buf = append(buf, 0)
+                return buf
+            }
+        - id: v2
+          title: Parse DNS Header
+          description: >-
+            Write a function that parses a 12-byte DNS header from raw bytes using
+            <code>encoding/binary.BigEndian</code>. Return a struct with ID, Flags, QDCount, ANCount, NSCount, ARCount
+            (all uint16).
+          hints:
+            - Use <code>binary.BigEndian.Uint16(data[0:2])</code> for each 2-byte field
+            - Fields are at offsets 0, 2, 4, 6, 8, 10
+          solution: |-
+            type DNSHeader struct {
+                ID, Flags, QDCount, ANCount, NSCount, ARCount uint16
+            }
+
+            func parseHeader(data []byte) DNSHeader {
+                return DNSHeader{
+                    ID:      binary.BigEndian.Uint16(data[0:2]),
+                    Flags:   binary.BigEndian.Uint16(data[2:4]),
+                    QDCount: binary.BigEndian.Uint16(data[4:6]),
+                    ANCount: binary.BigEndian.Uint16(data[6:8]),
+                    NSCount: binary.BigEndian.Uint16(data[8:10]),
+                    ARCount: binary.BigEndian.Uint16(data[10:12]),
+                }
+            }
+  challenges:
+    - id: challenge_1
+      block: 1
+      difficulty: 1
+      concept: TCP
+      variants:
+        - id: v1
+          title: Key-Value TCP Server
+          description: >-
+            Build a TCP server that handles <code>GET key</code> and <code>SET key value</code> commands. Store data in
+            a <code>map[string]string</code>. Return the value for GET, or <code>"OK"</code> for SET. Return <code>"NOT
+            FOUND"</code> for missing keys.
+          functionSignature: func handleKVConn(conn net.Conn, store map[string]string, mu *sync.RWMutex)
+          difficulty: 1
+          testCases:
+            - input: SET name redis
+              output: OK
+            - input: GET name
+              output: redis
+            - input: GET missing
+              output: NOT FOUND
+          hints:
+            - title: 🤔 Think about it
+              content: How do you parse the command and arguments from a line? How do you protect the shared map?
+            - title: 💡 Hint
+              content: >-
+                Split the line with strings.Fields. Lock mu for writes (SET), RLock for reads (GET). Use bufio.Scanner
+                to read lines.
+          solution: |-
+            func handleKVConn(conn net.Conn, store map[string]string, mu *sync.RWMutex) {
+                defer conn.Close()
+                scanner := bufio.NewScanner(conn)
+                for scanner.Scan() {
+                    parts := strings.Fields(scanner.Text())
+                    if len(parts) == 0 {
+                        continue
+                    }
+                    switch strings.ToUpper(parts[0]) {
+                    case "SET":
+                        if len(parts) < 3 {
+                            fmt.Fprintln(conn, "ERR usage: SET key value")
+                            continue
+                        }
+                        mu.Lock()
+                        store[parts[1]] = strings.Join(parts[2:], " ")
+                        mu.Unlock()
+                        fmt.Fprintln(conn, "OK")
+                    case "GET":
+                        if len(parts) < 2 {
+                            fmt.Fprintln(conn, "ERR usage: GET key")
+                            continue
+                        }
+                        mu.RLock()
+                        val, ok := store[parts[1]]
+                        mu.RUnlock()
+                        if ok {
+                            fmt.Fprintln(conn, val)
+                        } else {
+                            fmt.Fprintln(conn, "NOT FOUND")
+                        }
+                    default:
+                        fmt.Fprintln(conn, "ERR unknown command")
+                    }
+                }
+            }
+          annotations:
+            - type: pattern
+              text: Command parsing + shared state with RWMutex — the foundation of any TCP protocol server
+            - type: idiom
+              text: "RWMutex for read-heavy workloads: multiple concurrent readers, exclusive writers"
+        - id: v2
+          title: Concurrent TCP Chat Server
+          description: >-
+            Build a chat server where clients connect via TCP. Each message from a client is broadcast to all other
+            connected clients. Track clients with a map of connections protected by a mutex.
+          functionSignature: func runChatServer(addr string) error
+          difficulty: 2
+          testCases:
+            - input: client A sends "hello"
+              output: "client B receives \"[A]: hello\""
+            - input: client disconnects
+              output: removed from broadcast list
+          hints:
+            - title: 🤔 Think about it
+              content: How do you safely add/remove clients while broadcasting? How do you detect disconnected clients?
+            - title: 💡 Hint
+              content: >-
+                Keep a map[net.Conn]string (conn → name). Mutex-protect add/remove. Broadcast by iterating the map and
+                writing to each conn. If write fails, remove that client.
+          solution: |-
+            type ChatServer struct {
+                mu      sync.Mutex
+                clients map[net.Conn]string
+            }
+
+            func (s *ChatServer) broadcast(sender net.Conn, msg string) {
+                s.mu.Lock()
+                defer s.mu.Unlock()
+                name := s.clients[sender]
+                for conn := range s.clients {
+                    if conn != sender {
+                        fmt.Fprintf(conn, "[%s]: %s\n", name, msg)
+                    }
+                }
+            }
+
+            func (s *ChatServer) handleClient(conn net.Conn) {
+                defer conn.Close()
+                name := conn.RemoteAddr().String()
+                s.mu.Lock()
+                s.clients[conn] = name
+                s.mu.Unlock()
+                defer func() {
+                    s.mu.Lock()
+                    delete(s.clients, conn)
+                    s.mu.Unlock()
+                }()
+                scanner := bufio.NewScanner(conn)
+                for scanner.Scan() {
+                    s.broadcast(conn, scanner.Text())
+                }
+            }
+
+            func runChatServer(addr string) error {
+                ln, err := net.Listen("tcp", addr)
+                if err != nil {
+                    return err
+                }
+                defer ln.Close()
+                s := &ChatServer{clients: make(map[net.Conn]string)}
+                for {
+                    conn, err := ln.Accept()
+                    if err != nil {
+                        continue
+                    }
+                    go s.handleClient(conn)
+                }
+            }
+          annotations:
+            - type: pattern
+              text: "Broadcast pattern: mutex-protected client set, iterate and write to each connection"
+            - type: gotcha
+              text: Writing to a disconnected conn returns an error — use that to detect and clean up stale clients
+        - id: v3
+          title: TCP Connection Pool
+          description: >-
+            Build a connection pool that maintains N persistent TCP connections to a server. <code>Get()</code> returns
+            a connection (blocking if none available). <code>Put(conn)</code> returns it. <code>Close()</code> drains
+            the pool. Use a buffered channel as the pool.
+          functionSignature: func NewConnPool(addr string, size int) (*ConnPool, error)
+          difficulty: 3
+          testCases:
+            - input: pool of 3, Get() 3 times
+              output: returns 3 connections, 4th blocks
+            - input: Get() then Put()
+              output: connection reusable
+            - input: Close()
+              output: all connections closed, Get() returns error
+          hints:
+            - title: 🤔 Think about it
+              content: A buffered channel of size N naturally limits concurrency. How do you handle the pool being closed?
+            - title: 💡 Hint
+              content: >-
+                Pool struct has <code>conns chan net.Conn</code> and <code>closed bool</code>. Pre-fill with Dial. Get
+                reads from channel, Put writes back. Close drains and closes all conns.
+          solution: |-
+            type ConnPool struct {
+                conns  chan net.Conn
+                addr   string
+                mu     sync.Mutex
+                closed bool
+            }
+
+            func NewConnPool(addr string, size int) (*ConnPool, error) {
+                p := &ConnPool{
+                    conns: make(chan net.Conn, size),
+                    addr:  addr,
+                }
+                for i := 0; i < size; i++ {
+                    conn, err := net.Dial("tcp", addr)
+                    if err != nil {
+                        p.Close()
+                        return nil, err
+                    }
+                    p.conns <- conn
+                }
+                return p, nil
+            }
+
+            func (p *ConnPool) Get() (net.Conn, error) {
+                p.mu.Lock()
+                if p.closed {
+                    p.mu.Unlock()
+                    return nil, fmt.Errorf("pool closed")
+                }
+                p.mu.Unlock()
+                return <-p.conns, nil
+            }
+
+            func (p *ConnPool) Put(conn net.Conn) {
+                p.mu.Lock()
+                if p.closed {
+                    conn.Close()
+                    p.mu.Unlock()
+                    return
+                }
+                p.mu.Unlock()
+                p.conns <- conn
+            }
+
+            func (p *ConnPool) Close() {
+                p.mu.Lock()
+                p.closed = true
+                p.mu.Unlock()
+                close(p.conns)
+                for conn := range p.conns {
+                    conn.Close()
+                }
+            }
+          annotations:
+            - type: pattern
+              text: Buffered channel as a pool — channel size = max connections. Get/Put = receive/send.
+            - type: interview
+              text: Connection pooling is a common systems design interview topic — understand the channel-based approach
+    - id: challenge_2
+      block: 2
+      difficulty: 1
+      concept: DNS Wire Format
+      variants:
+        - id: v1
+          title: Decode Domain Name
+          description: >-
+            Write a function that decodes a DNS wire-format domain name back to a dotted string. Input is a byte slice
+            and an offset. Return the domain and the new offset after the name.
+          functionSignature: func decodeDomain(data []byte, offset int) (string, int)
+          difficulty: 1
+          testCases:
+            - input: "[7]example[3]com[0] at offset 0"
+              output: ("example.com", 13)
+            - input: "[3]api[5]local[0] at offset 0"
+              output: ("api.local", 11)
+          hints:
+            - title: 🤔 Think about it
+              content: Each label starts with a length byte. What terminates the domain name?
+            - title: 💡 Hint
+              content: >-
+                Loop: read length byte. If 0, break. Read that many bytes as a label. Advance offset. Join labels with
+                dots.
+          solution: |-
+            func decodeDomain(data []byte, offset int) (string, int) {
+                var labels []string
+                for {
+                    length := int(data[offset])
+                    if length == 0 {
+                        offset++
+                        break
+                    }
+                    offset++
+                    labels = append(labels, string(data[offset:offset+length]))
+                    offset += length
+                }
+                return strings.Join(labels, "."), offset
+            }
+          annotations:
+            - type: stdlib
+              text: encoding/binary.BigEndian for multi-byte fields, raw byte manipulation for variable-length labels
+        - id: v2
+          title: Build DNS A Record Response
+          description: >-
+            Write a function that takes a DNS query packet and an IP address, and builds a complete DNS response with
+            one A record. Copy the query ID, set response flags (0x8180), include the original question, and append the
+            answer.
+          functionSignature: func buildAResponse(query []byte, ip net.IP) []byte
+          difficulty: 2
+          testCases:
+            - input: query for example.com, ip 93.184.216.34
+              output: valid DNS response with A record
+            - input: query for api.local, ip 10.0.0.2
+              output: response ID matches query ID
+          hints:
+            - title: 🤔 Think about it
+              content: How do you find where the question section ends in the query? What does a name pointer (0xC00C) do?
+            - title: 💡 Hint
+              content: >-
+                Question ends after the null-terminated domain name + 4 bytes (QTYPE + QCLASS). Use 0xC00C as a pointer
+                to the name at offset 12. Answer: pointer + type A (0x0001) + class IN (0x0001) + TTL (4 bytes) + length
+                4 + IP.
+          solution: |-
+            func buildAResponse(query []byte, ip net.IP) []byte {
+                id := binary.BigEndian.Uint16(query[0:2])
+                header := make([]byte, 12)
+                binary.BigEndian.PutUint16(header[0:2], id)
+                binary.BigEndian.PutUint16(header[2:4], 0x8180)
+                binary.BigEndian.PutUint16(header[4:6], 1) // questions
+                binary.BigEndian.PutUint16(header[6:8], 1) // answers
+
+                // Find end of question
+                offset := 12
+                for query[offset] != 0 {
+                    offset += int(query[offset]) + 1
+                }
+                offset += 5 // null + QTYPE + QCLASS
+                question := query[12:offset]
+
+                // Build A record answer
+                var answer []byte
+                answer = append(answer, 0xC0, 0x0C)         // name pointer
+                answer = append(answer, 0, 1)               // type A
+                answer = append(answer, 0, 1)               // class IN
+                answer = append(answer, 0, 0, 0, 60)        // TTL 60s
+                answer = append(answer, 0, 4)               // data length
+                answer = append(answer, ip.To4()...)         // IP
+
+                var resp []byte
+                resp = append(resp, header...)
+                resp = append(resp, question...)
+                resp = append(resp, answer...)
+                return resp
+            }
+          annotations:
+            - type: pattern
+              text: "DNS response construction: header → question (copied from query) → answer records"
+            - type: gotcha
+              text: >-
+                0xC00C is a pointer to offset 12 (start of question name). Pointer compression avoids repeating the
+                domain name.
+        - id: v3
+          title: Mini DNS Resolver
+          description: >-
+            Build a DNS resolver that constructs a query packet from scratch, sends it to a UDP DNS server (e.g.,
+            8.8.8.8:53), parses the response, and returns the resolved IP address. Handle timeouts with a 3-second
+            deadline.
+          functionSignature: func resolve(domain string, dnsServer string) (net.IP, error)
+          difficulty: 3
+          testCases:
+            - input: resolve("example.com", "8.8.8.8:53")
+              output: net.IP, nil
+            - input: resolve("nonexistent.invalid", "8.8.8.8:53")
+              output: nil, error (NXDOMAIN)
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                How do you build a DNS query from scratch? What random data do you need? How do you parse the response
+                to find the IP?
+            - title: 💡 Hint
+              content: >-
+                Build header (random ID, flags 0x0100, 1 question). Encode domain name. Append QTYPE=1 (A), QCLASS=1
+                (IN). Send via UDP with 3s deadline. Parse response: skip to answer section, read the last 4 bytes as
+                the IP.
+          solution: |-
+            func resolve(domain string, dnsServer string) (net.IP, error) {
+                // Build query
+                id := uint16(rand.Intn(65535))
+                header := make([]byte, 12)
+                binary.BigEndian.PutUint16(header[0:2], id)
+                binary.BigEndian.PutUint16(header[2:4], 0x0100) // standard query, recursion desired
+                binary.BigEndian.PutUint16(header[4:6], 1)      // 1 question
+
+                name := encodeDomain(domain)
+                var question []byte
+                question = append(question, name...)
+                question = append(question, 0, 1) // QTYPE A
+                question = append(question, 0, 1) // QCLASS IN
+
+                var query []byte
+                query = append(query, header...)
+                query = append(query, question...)
+
+                // Send via UDP
+                conn, err := net.Dial("udp", dnsServer)
+                if err != nil {
+                    return nil, err
+                }
+                defer conn.Close()
+                conn.SetDeadline(time.Now().Add(3 * time.Second))
+                conn.Write(query)
+
+                buf := make([]byte, 512)
+                n, err := conn.Read(buf)
+                if err != nil {
+                    return nil, err
+                }
+                resp := buf[:n]
+
+                // Check RCODE
+                flags := binary.BigEndian.Uint16(resp[2:4])
+                rcode := flags & 0x000F
+                if rcode != 0 {
+                    return nil, fmt.Errorf("DNS error: rcode %d", rcode)
+                }
+
+                // Parse answer: skip to end, last 4 bytes are the IP
+                anCount := binary.BigEndian.Uint16(resp[6:8])
+                if anCount == 0 {
+                    return nil, fmt.Errorf("no answers")
+                }
+                // IP is the last 4 bytes of the response for a simple A record
+                ip := net.IP(resp[n-4 : n])
+                return ip, nil
+            }
+          annotations:
+            - type: interview
+              text: >-
+                Building a DNS resolver from scratch demonstrates deep protocol understanding — impressive in systems
+                interviews
+            - type: complexity
+              text: O(1) for a single query, but real resolvers cache results and handle retries

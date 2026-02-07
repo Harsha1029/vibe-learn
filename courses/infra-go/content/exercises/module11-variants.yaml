@@ -1,0 +1,317 @@
+conceptLinks:
+  client-go: "#client-go-basics"
+  Informers: "#informers-cached-watches"
+  CRDs: "#custom-resource-definitions"
+  Reconciliation: "#the-reconciliation-loop"
+  Operators: "#building-an-operator"
+sharedContent: {}
+variants:
+  warmups:
+    - id: warmup_1
+      concept: client-go
+      variants:
+        - id: v1
+          title: List Pods by Label
+          description: Write a function that lists all pods in a namespace matching a label selector. Return a slice of pod names.
+          hints:
+            - "Use <code>clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: selector})</code>"
+            - Iterate <code>pods.Items</code> and collect <code>pod.Name</code>
+          solution: |-
+            func listPodsByLabel(clientset *kubernetes.Clientset, namespace, selector string) ([]string, error) {
+                pods, err := clientset.CoreV1().Pods(namespace).List(
+                    context.Background(),
+                    metav1.ListOptions{LabelSelector: selector},
+                )
+                if err != nil {
+                    return nil, err
+                }
+                var names []string
+                for _, pod := range pods.Items {
+                    names = append(names, pod.Name)
+                }
+                return names, nil
+            }
+        - id: v2
+          title: Create ConfigMap
+          description: >-
+            Write a function that creates a ConfigMap in a given namespace with the provided key-value data. Return an
+            error if creation fails.
+          hints:
+            - >-
+              Build a <code>&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns}, Data:
+              data}</code>
+            - Use <code>clientset.CoreV1().ConfigMaps(ns).Create(ctx, cm, metav1.CreateOptions{})</code>
+          solution: |-
+            func createConfigMap(clientset *kubernetes.Clientset, ns, name string, data map[string]string) error {
+                cm := &corev1.ConfigMap{
+                    ObjectMeta: metav1.ObjectMeta{
+                        Name:      name,
+                        Namespace: ns,
+                    },
+                    Data: data,
+                }
+                _, err := clientset.CoreV1().ConfigMaps(ns).Create(
+                    context.Background(), cm, metav1.CreateOptions{},
+                )
+                return err
+            }
+    - id: warmup_2
+      concept: Reconciliation
+      variants:
+        - id: v1
+          title: Idempotent Reconcile
+          description: >-
+            Write a reconcile function that ensures a pod has a specific annotation. If the annotation already exists
+            with the correct value, do nothing. If it's missing or wrong, update the pod. This demonstrates idempotent
+            reconciliation.
+          hints:
+            - Check <code>pod.Annotations[key]</code> first — if it matches, return nil (no-op)
+            - If missing or different, set it and call <code>clientset.CoreV1().Pods(ns).Update(...)</code>
+          solution: |-
+            func ensureAnnotation(clientset *kubernetes.Clientset, ns, podName, key, value string) error {
+                pod, err := clientset.CoreV1().Pods(ns).Get(
+                    context.Background(), podName, metav1.GetOptions{},
+                )
+                if err != nil {
+                    return err
+                }
+                if pod.Annotations[key] == value {
+                    return nil // already correct, idempotent
+                }
+                if pod.Annotations == nil {
+                    pod.Annotations = make(map[string]string)
+                }
+                pod.Annotations[key] = value
+                _, err = clientset.CoreV1().Pods(ns).Update(
+                    context.Background(), pod, metav1.UpdateOptions{},
+                )
+                return err
+            }
+        - id: v2
+          title: Work Queue Handler
+          description: >-
+            Write a <code>processNextItem</code> function for a K8s controller work queue. Get an item, call reconcile,
+            requeue on error with rate limiting, forget on success.
+          hints:
+            - Call <code>queue.Get()</code> to get the next item. Defer <code>queue.Done(key)</code>.
+            - "On error: <code>queue.AddRateLimited(key)</code>. On success: <code>queue.Forget(key)</code>."
+          solution: |-
+            func processNextItem(queue workqueue.RateLimitingInterface, reconcile func(string) error) bool {
+                key, quit := queue.Get()
+                if quit {
+                    return false
+                }
+                defer queue.Done(key)
+
+                if err := reconcile(key.(string)); err != nil {
+                    queue.AddRateLimited(key)
+                    slog.Error("reconcile failed", "key", key, "error", err)
+                    return true
+                }
+                queue.Forget(key)
+                return true
+            }
+  challenges:
+    - id: challenge_1
+      block: 1
+      difficulty: 1
+      concept: client-go
+      variants:
+        - id: v1
+          title: Pod Health Reporter
+          description: >-
+            Write a function that lists all pods across all namespaces and returns a health report: counts of Running,
+            Pending, Failed, and Unknown pods, grouped by namespace.
+          functionSignature: func podHealthReport(clientset *kubernetes.Clientset) (map[string]map[string]int, error)
+          difficulty: 1
+          testCases:
+            - input: cluster with 3 namespaces
+              output: map["default"]map["Running":5,"Pending":1]
+            - input: empty cluster
+              output: empty map, nil
+          hints:
+            - title: 🤔 Think about it
+              content: How do you list pods across all namespaces? What field gives you the pod phase?
+            - title: 💡 Hint
+              content: >-
+                Use empty string for namespace to list all: Pods("").List(...). Group by pod.Namespace, count by
+                string(pod.Status.Phase).
+          solution: |-
+            func podHealthReport(clientset *kubernetes.Clientset) (map[string]map[string]int, error) {
+                pods, err := clientset.CoreV1().Pods("").List(
+                    context.Background(), metav1.ListOptions{},
+                )
+                if err != nil {
+                    return nil, err
+                }
+                report := make(map[string]map[string]int)
+                for _, pod := range pods.Items {
+                    ns := pod.Namespace
+                    phase := string(pod.Status.Phase)
+                    if report[ns] == nil {
+                        report[ns] = make(map[string]int)
+                    }
+                    report[ns][phase]++
+                }
+                return report, nil
+            }
+          annotations:
+            - type: idiom
+              text: Empty namespace string means all namespaces — a common client-go pattern
+        - id: v2
+          title: ConfigMap Sync Controller
+          description: >-
+            Write a controller-style function that watches a source ConfigMap and syncs its data to ConfigMaps in all
+            other namespaces. When the source changes, update all copies. Implement as a reconcile function that's
+            called with the source ConfigMap name.
+          functionSignature: func reconcileConfigSync(clientset *kubernetes.Clientset, sourceNS, sourceName string) error
+          difficulty: 2
+          testCases:
+            - input: source ConfigMap exists with data
+              output: copies created/updated in all namespaces
+            - input: source ConfigMap deleted
+              output: returns NotFound error (caller handles)
+          hints:
+            - title: 🤔 Think about it
+              content: How do you list all namespaces? How do you handle the create-or-update pattern?
+            - title: 💡 Hint
+              content: >-
+                List namespaces, skip the source namespace. For each target namespace: try Get — if NotFound, Create. If
+                exists, compare data and Update if different. This is the create-or-update pattern.
+          solution: |-
+            func reconcileConfigSync(clientset *kubernetes.Clientset, sourceNS, sourceName string) error {
+                source, err := clientset.CoreV1().ConfigMaps(sourceNS).Get(
+                    context.Background(), sourceName, metav1.GetOptions{},
+                )
+                if err != nil {
+                    return err
+                }
+
+                namespaces, err := clientset.CoreV1().Namespaces().List(
+                    context.Background(), metav1.ListOptions{},
+                )
+                if err != nil {
+                    return err
+                }
+
+                for _, ns := range namespaces.Items {
+                    if ns.Name == sourceNS {
+                        continue
+                    }
+                    existing, err := clientset.CoreV1().ConfigMaps(ns.Name).Get(
+                        context.Background(), sourceName, metav1.GetOptions{},
+                    )
+                    if errors.IsNotFound(err) {
+                        cm := &corev1.ConfigMap{
+                            ObjectMeta: metav1.ObjectMeta{
+                                Name:      sourceName,
+                                Namespace: ns.Name,
+                            },
+                            Data: source.Data,
+                        }
+                        clientset.CoreV1().ConfigMaps(ns.Name).Create(
+                            context.Background(), cm, metav1.CreateOptions{},
+                        )
+                    } else if err == nil && !reflect.DeepEqual(existing.Data, source.Data) {
+                        existing.Data = source.Data
+                        clientset.CoreV1().ConfigMaps(ns.Name).Update(
+                            context.Background(), existing, metav1.UpdateOptions{},
+                        )
+                    }
+                }
+                return nil
+            }
+          annotations:
+            - type: pattern
+              text: "Create-or-Update: Get → NotFound? Create : changed? Update. The core K8s reconciliation pattern."
+            - type: gotcha
+              text: Always check errors.IsNotFound(err) — don't assume a Get error means the resource doesn't exist
+        - id: v3
+          title: Operator Reconciler with Finalizer
+          description: >-
+            Write a reconcile function for a custom resource that: (1) adds a finalizer on creation, (2) runs cleanup on
+            deletion (before the finalizer is removed), (3) ensures a corresponding ConfigMap exists with data from the
+            CR spec, (4) updates the CR status with the ConfigMap's creation timestamp.
+          functionSignature: func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error)
+          difficulty: 3
+          testCases:
+            - input: new CR created
+              output: finalizer added, ConfigMap created, status updated
+            - input: CR deleted
+              output: cleanup runs, finalizer removed, ConfigMap deleted
+            - input: CR spec changed
+              output: ConfigMap updated to match
+          hints:
+            - title: 🤔 Think about it
+              content: What order should you check things? How do you tell if the resource is being deleted?
+            - title: 💡 Hint
+              content: >-
+                Check DeletionTimestamp first — if set, run cleanup and remove finalizer. Otherwise: add finalizer if
+                missing, ensure ConfigMap exists (create-or-update), update status. Use client.IgnoreNotFound for the
+                initial Get.
+          solution: |-
+            func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+                var cr v1.MyResource
+                if err := r.Get(ctx, req.NamespacedName, &cr); err != nil {
+                    return ctrl.Result{}, client.IgnoreNotFound(err)
+                }
+
+                finalizer := "myresource.example.com/cleanup"
+
+                // Handle deletion
+                if cr.DeletionTimestamp != nil {
+                    if containsString(cr.Finalizers, finalizer) {
+                        // Cleanup: delete the ConfigMap
+                        cm := &corev1.ConfigMap{}
+                        cm.Name = cr.Name
+                        cm.Namespace = cr.Namespace
+                        r.Delete(ctx, cm)
+
+                        cr.Finalizers = removeString(cr.Finalizers, finalizer)
+                        r.Update(ctx, &cr)
+                    }
+                    return ctrl.Result{}, nil
+                }
+
+                // Add finalizer
+                if !containsString(cr.Finalizers, finalizer) {
+                    cr.Finalizers = append(cr.Finalizers, finalizer)
+                    if err := r.Update(ctx, &cr); err != nil {
+                        return ctrl.Result{}, err
+                    }
+                }
+
+                // Ensure ConfigMap
+                var cm corev1.ConfigMap
+                err := r.Get(ctx, req.NamespacedName, &cm)
+                if errors.IsNotFound(err) {
+                    cm = corev1.ConfigMap{
+                        ObjectMeta: metav1.ObjectMeta{
+                            Name:      cr.Name,
+                            Namespace: cr.Namespace,
+                        },
+                        Data: cr.Spec.Data,
+                    }
+                    if err := r.Create(ctx, &cm); err != nil {
+                        return ctrl.Result{}, err
+                    }
+                } else if err == nil {
+                    cm.Data = cr.Spec.Data
+                    r.Update(ctx, &cm)
+                }
+
+                // Update status
+                cr.Status.ConfigMapCreated = cm.CreationTimestamp
+                r.Status().Update(ctx, &cr)
+
+                return ctrl.Result{}, nil
+            }
+          annotations:
+            - type: pattern
+              text: "Full operator reconcile: finalizer → cleanup on delete → ensure owned resources → update status"
+            - type: interview
+              text: Writing a complete reconciler with finalizers is a senior K8s/Go interview question
+            - type: gotcha
+              text: >-
+                Update the status subresource separately with Status().Update() — regular Update() ignores status
+                changes

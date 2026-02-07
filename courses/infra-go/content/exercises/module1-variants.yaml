@@ -1,0 +1,931 @@
+conceptLinks:
+  Slice Operations: "#slice-operations-under-pressure"
+  In-Place Manipulation: "#in-place-manipulation"
+  Map Patterns: "#map-patterns-for-infra"
+  String Parsing: "#string-parsing--building"
+  Sorting & Filtering: "#sorting--filtering"
+sharedContent: {}
+variants:
+  warmups:
+    - id: warmup_1
+      concept: Slice Operations
+      variants:
+        - id: v1
+          title: Last N Servers
+          description: >-
+            Given <code>servers := []string{"web-1", "web-2", "api-1", "api-2", "db-1"}</code>, return a new slice
+            containing the last 3 elements.
+          hints:
+            - "Use a slice expression: <code>s[len(s)-3:]</code>"
+            - The result should be <code>[api-1 api-2 db-1]</code>
+          solution: |-
+            servers := []string{"web-1", "web-2", "api-1", "api-2", "db-1"}
+            last3 := servers[len(servers)-3:]
+            fmt.Println(last3) // [api-1 api-2 db-1]
+        - id: v2
+          title: Response Time Range
+          description: >-
+            Given <code>times := []int{234, 12, 891, 45, 567, 23, 445}</code> (response times in ms), find and print the
+            minimum and maximum values. Use a single loop.
+          hints:
+            - Initialize min and max to <code>times[0]</code>, then loop from index 1
+            - Use <code>if times[i] < min</code> and <code>if times[i] > max</code>
+          solution: |-
+            times := []int{234, 12, 891, 45, 567, 23, 445}
+            min, max := times[0], times[0]
+            for _, t := range times[1:] {
+                if t < min {
+                    min = t
+                }
+                if t > max {
+                    max = t
+                }
+            }
+            fmt.Printf("min=%dms max=%dms\n", min, max)
+        - id: v3
+          title: Batch Pods
+          description: >-
+            Given <code>pods := []string{"web-1", "web-2", "web-3", "web-4", "web-5", "web-6", "web-7"}</code> and a
+            batch size of 3, print each batch on its own line: <code>[web-1 web-2 web-3]</code>, <code>[web-4 web-5
+            web-6]</code>, <code>[web-7]</code>.
+          hints:
+            - Loop with <code>for i := 0; i < len(pods); i += batchSize</code>
+            - Compute <code>end := i + batchSize</code>, clamp with <code>if end > len(pods) { end = len(pods) }</code>
+          solution: |-
+            pods := []string{"web-1", "web-2", "web-3", "web-4", "web-5", "web-6", "web-7"}
+            batchSize := 3
+            for i := 0; i < len(pods); i += batchSize {
+                end := i + batchSize
+                if end > len(pods) {
+                    end = len(pods)
+                }
+                fmt.Println(pods[i:end])
+            }
+        - id: v4
+          title: Build a Slice from Scratch
+          description: >-
+            Start with an empty slice. Append the strings <code>"node-1"</code> through <code>"node-5"</code> using a
+            loop. Then print the length, capacity, and contents.
+          hints:
+            - Use <code>var nodes []string</code> then <code>append</code> in a loop
+            - Format node names with <code>fmt.Sprintf("node-%d", i)</code>
+          solution: |-
+            var nodes []string
+            for i := 1; i <= 5; i++ {
+                nodes = append(nodes, fmt.Sprintf("node-%d", i))
+            }
+            fmt.Printf("len=%d cap=%d %v\n", len(nodes), cap(nodes), nodes)
+    - id: warmup_2
+      concept: In-Place Manipulation
+      variants:
+        - id: v1
+          title: Reverse Server List
+          description: >-
+            Given <code>servers := []string{"nginx", "redis", "postgres", "mongo"}</code>, reverse the slice <strong>in
+            place</strong> (don't create a new slice). Print the result.
+          hints:
+            - "Two pointers: <code>i</code> starts at 0, <code>j</code> starts at <code>len(s)-1</code>"
+            - Swap <code>s[i], s[j] = s[j], s[i]</code> and walk inward
+          solution: |-
+            servers := []string{"nginx", "redis", "postgres", "mongo"}
+            for i, j := 0, len(servers)-1; i < j; i, j = i+1, j-1 {
+                servers[i], servers[j] = servers[j], servers[i]
+            }
+            fmt.Println(servers)
+        - id: v2
+          title: Remove Terminated Pod
+          description: >-
+            Given <code>pods := []string{"web-1", "web-2", "web-3", "web-4"}</code>, remove the pod at index 1
+            (<code>"web-2"</code>) <strong>without preserving order</strong> (swap with last element, then shrink).
+            Print the result.
+          hints:
+            - "Swap: <code>pods[1] = pods[len(pods)-1]</code>"
+            - "Shrink: <code>pods = pods[:len(pods)-1]</code>"
+          solution: |-
+            pods := []string{"web-1", "web-2", "web-3", "web-4"}
+            pods[1] = pods[len(pods)-1]
+            pods = pods[:len(pods)-1]
+            fmt.Println(pods) // [web-1 web-4 web-3]
+        - id: v3
+          title: Insert at Position
+          description: >-
+            Given <code>queue := []string{"job-a", "job-b", "job-d"}</code>, insert <code>"job-c"</code> at index 2
+            (before <code>"job-d"</code>). Print the result: <code>[job-a job-b job-c job-d]</code>.
+          hints:
+            - "Grow by one: <code>queue = append(queue, \"\")</code>"
+            - "Shift right: <code>copy(queue[3:], queue[2:])</code>, then set <code>queue[2] = \"job-c\"</code>"
+          solution: |-
+            queue := []string{"job-a", "job-b", "job-d"}
+            queue = append(queue, "")
+            copy(queue[3:], queue[2:])
+            queue[2] = "job-c"
+            fmt.Println(queue) // [job-a job-b job-c job-d]
+        - id: v4
+          title: Filter Running Pods
+          description: >-
+            Given these slices:<br><code>names := []string{"web-1", "web-2", "db-1", "cache-1",
+            "web-3"}</code><br><code>statuses := []string{"Running", "Failed", "Running", "Running",
+            "Pending"}</code><br>Filter <code>names</code> <strong>in place</strong> to keep only pods where status is
+            <code>"Running"</code>. Print the result.
+          hints:
+            - "Use the two-index pattern: <code>n := 0</code> for write position"
+            - Loop with range, if status is Running, write to <code>names[n]</code> and increment <code>n</code>
+            - "Truncate: <code>names = names[:n]</code>"
+          solution: |-
+            names := []string{"web-1", "web-2", "db-1", "cache-1", "web-3"}
+            statuses := []string{"Running", "Failed", "Running", "Running", "Pending"}
+            n := 0
+            for i, s := range statuses {
+                if s == "Running" {
+                    names[n] = names[i]
+                    n++
+                }
+            }
+            names = names[:n]
+            fmt.Println(names) // [web-1 db-1 cache-1]
+        - id: v5
+          title: Deduplicate Sorted
+          description: >-
+            Given <code>versions := []string{"v1.0", "v1.0", "v1.1", "v1.1", "v1.1", "v1.2", "v1.3", "v1.3"}</code>
+            (already sorted), remove duplicates <strong>in place</strong>. Print the result: <code>[v1.0 v1.1 v1.2
+            v1.3]</code>.
+          hints:
+            - "Use the write-index pattern: <code>n := 1</code> (first element always stays)"
+            - If <code>versions[i] != versions[i-1]</code>, write it to position <code>n</code> and increment
+          solution: |-
+            versions := []string{"v1.0", "v1.0", "v1.1", "v1.1", "v1.1", "v1.2", "v1.3", "v1.3"}
+            n := 1
+            for i := 1; i < len(versions); i++ {
+                if versions[i] != versions[i-1] {
+                    versions[n] = versions[i]
+                    n++
+                }
+            }
+            versions = versions[:n]
+            fmt.Println(versions) // [v1.0 v1.1 v1.2 v1.3]
+    - id: warmup_3
+      concept: Map Patterns
+      variants:
+        - id: v1
+          title: Count Log Levels
+          description: >-
+            Given <code>levels := []string{"INFO", "ERROR", "INFO", "WARN", "ERROR", "INFO", "DEBUG", "ERROR"}</code>,
+            count occurrences of each level using a map. Print each level and its count.
+          hints:
+            - Create <code>counts := make(map[string]int)</code>
+            - Loop and <code>counts[level]++</code> — zero value of int is 0, so it just works
+          solution: |-
+            levels := []string{"INFO", "ERROR", "INFO", "WARN", "ERROR", "INFO", "DEBUG", "ERROR"}
+            counts := make(map[string]int)
+            for _, level := range levels {
+                counts[level]++
+            }
+            for level, count := range counts {
+                fmt.Printf("%s: %d\n", level, count)
+            }
+        - id: v2
+          title: Group by Namespace
+          description: >-
+            Given these parallel slices:<br><code>pods := []string{"web-1", "web-2", "api-1", "db-1",
+            "api-2"}</code><br><code>namespaces := []string{"frontend", "frontend", "backend", "data",
+            "backend"}</code><br>Build a <code>map[string][]string</code> grouping pod names by namespace. Print the
+            map.
+          hints:
+            - Use <code>grouped := make(map[string][]string)</code>
+            - Loop and <code>grouped[namespaces[i]] = append(grouped[namespaces[i]], pods[i])</code>
+          solution: |-
+            pods := []string{"web-1", "web-2", "api-1", "db-1", "api-2"}
+            namespaces := []string{"frontend", "frontend", "backend", "data", "backend"}
+            grouped := make(map[string][]string)
+            for i, ns := range namespaces {
+                grouped[ns] = append(grouped[ns], pods[i])
+            }
+            for ns, names := range grouped {
+                fmt.Printf("%s: %v\n", ns, names)
+            }
+        - id: v3
+          title: Merge Config Maps
+          description: >-
+            Given two config maps:<br><code>defaults := map[string]string{"timeout": "30s", "retries": "3", "log_level":
+            "info"}</code><br><code>overrides := map[string]string{"timeout": "10s", "log_level":
+            "debug"}</code><br>Merge them into a new map where overrides win. Print the result.
+          hints:
+            - Create a new map, copy defaults in, then copy overrides in (overrides clobber)
+            - Or loop defaults first, then overrides — second loop overwrites
+          solution: |-
+            defaults := map[string]string{"timeout": "30s", "retries": "3", "log_level": "info"}
+            overrides := map[string]string{"timeout": "10s", "log_level": "debug"}
+            merged := make(map[string]string)
+            for k, v := range defaults {
+                merged[k] = v
+            }
+            for k, v := range overrides {
+                merged[k] = v
+            }
+            for k, v := range merged {
+                fmt.Printf("%s=%s\n", k, v)
+            }
+        - id: v4
+          title: Unique Error Messages
+          description: >-
+            Given <code>errors := []string{"timeout", "connection refused", "timeout", "DNS lookup failed", "timeout",
+            "connection refused"}</code>, use a map-as-set to find unique error messages. Print them in any order.
+          hints:
+            - Use <code>seen := make(map[string]bool)</code>
+            - Loop through errors, set <code>seen[err] = true</code>, then iterate the map keys
+          solution: >-
+            errors := []string{"timeout", "connection refused", "timeout", "DNS lookup failed", "timeout", "connection
+            refused"}
+
+            seen := make(map[string]bool)
+
+            for _, err := range errors {
+                seen[err] = true
+            }
+
+            for msg := range seen {
+                fmt.Println(msg)
+            }
+    - id: warmup_4
+      concept: String Parsing
+      variants:
+        - id: v1
+          title: Parse Label Pair
+          description: >-
+            Write a function <code>func parseLabel(s string) (string, string)</code> that takes a string like
+            <code>"app=nginx"</code> and returns the key and value. Split on the first <code>=</code> only (values might
+            contain <code>=</code>).
+          hints:
+            - Use <code>strings.Index(s, "=")</code> to find the first <code>=</code>
+            - "Slice: <code>s[:idx]</code> for key, <code>s[idx+1:]</code> for value"
+          solution: |-
+            func parseLabel(s string) (string, string) {
+                idx := strings.Index(s, "=")
+                if idx < 0 {
+                    return s, ""
+                }
+                return s[:idx], s[idx+1:]
+            }
+        - id: v2
+          title: Extract Namespace from Resource
+          description: >-
+            K8s resource names are often formatted as <code>"namespace/resource"</code>. Write a function <code>func
+            splitResource(s string) (string, string)</code> that returns the namespace and resource name. If there's no
+            <code>/</code>, return <code>"default"</code> as the namespace.
+          hints:
+            - Use <code>strings.Contains(s, "/")</code> to check
+            - Use <code>strings.SplitN(s, "/", 2)</code> to split into at most 2 parts
+          solution: |-
+            func splitResource(s string) (string, string) {
+                parts := strings.SplitN(s, "/", 2)
+                if len(parts) == 1 {
+                    return "default", parts[0]
+                }
+                return parts[0], parts[1]
+            }
+        - id: v3
+          title: Parse Log Line
+          description: >-
+            Given a log line like <code>"2024-01-15T10:30:00Z ERROR [auth-service] connection refused"</code>, extract
+            the timestamp, level, service name (without brackets), and message. Print each field.
+          hints:
+            - Use <code>strings.Fields(line)</code> to split on whitespace
+            - "Service: <code>strings.Trim(fields[2], \"[]\")</code>"
+            - "Message: <code>strings.Join(fields[3:], \" \")</code>"
+          solution: |-
+            line := "2024-01-15T10:30:00Z ERROR [auth-service] connection refused"
+            fields := strings.Fields(line)
+            timestamp := fields[0]
+            level := fields[1]
+            service := strings.Trim(fields[2], "[]")
+            message := strings.Join(fields[3:], " ")
+            fmt.Printf("time=%s level=%s service=%s msg=%s\n", timestamp, level, service, message)
+        - id: v4
+          title: Build Prometheus Labels
+          description: >-
+            Given <code>labels := map[string]string{"method": "GET", "status": "200", "path": "/api/health"}</code>,
+            build a Prometheus-style label string: <code>method="GET",status="200",path="/api/health"</code>. The pairs
+            can be in any order.
+          hints:
+            - Collect parts into a slice and <code>strings.Join</code>
+            - Format each pair as <code>key="value"</code> using <code>fmt.Sprintf</code>
+          solution: |-
+            labels := map[string]string{"method": "GET", "status": "200", "path": "/api/health"}
+            parts := make([]string, 0, len(labels))
+            for k, v := range labels {
+                parts = append(parts, fmt.Sprintf("%s=\"%s\"", k, v))
+            }
+            result := strings.Join(parts, ",")
+            fmt.Println(result)
+  challenges:
+    - id: challenge_1
+      block: 1
+      difficulty: 1
+      concept: Map Patterns
+      docLinks:
+        - url: https://pkg.go.dev/sort#Slice
+          title: sort.Slice documentation
+          note: custom sorting
+      variants:
+        - id: v1
+          title: Error Rate Calculator
+          description: >-
+            Write <code>func errorRate(lines []string) float64</code> that takes log lines in the format <code>"LEVEL
+            message"</code> and returns the percentage of lines that are ERROR level (0.0 to 100.0, rounded to one
+            decimal). Return 0.0 for empty input.<br><br>Example: <code>["INFO ok", "ERROR bad", "INFO ok2", "ERROR
+            oom", "WARN slow"]</code> → <code>40.0</code>
+          functionSignature: func errorRate(lines []string) float64
+          difficulty: 1
+          testCases:
+            - input: errorRate([]string{"INFO ok", "ERROR bad", "INFO ok2", "ERROR oom", "WARN slow"})
+              output: "40.0"
+            - input: errorRate([]string{"ERROR a", "ERROR b"})
+              output: "100.0"
+            - input: errorRate([]string{})
+              output: "0.0"
+          hints:
+            - title: 🤔 Think about it
+              content: You need to count errors and total lines. Then it's just division and rounding.
+            - title: 💡 Hint
+              content: >-
+                Count errors by checking <code>strings.Fields(line)[0] == "ERROR"</code>. Divide: <code>float64(errors)
+                / float64(total) * 100</code>. Round with <code>math.Round(rate*10) / 10</code>.
+          solution: |-
+            func errorRate(lines []string) float64 {
+                if len(lines) == 0 {
+                    return 0.0
+                }
+                errors := 0
+                for _, line := range lines {
+                    fields := strings.Fields(line)
+                    if len(fields) > 0 && fields[0] == "ERROR" {
+                        errors++
+                    }
+                }
+                rate := float64(errors) / float64(len(lines)) * 100
+                return math.Round(rate*10) / 10
+            }
+        - id: v2
+          title: Log Level Report
+          description: >-
+            Write <code>func logReport(lines []string) string</code> that takes log lines in the format <code>"LEVEL
+            message text"</code> and returns a report string with each level and its count, sorted by count
+            descending.<br><br>Example input: <code>["INFO request started", "ERROR timeout", "INFO request done", "WARN
+            slow query", "ERROR OOM"]</code><br>Example output: <code>"INFO: 2\nERROR: 2\nWARN: 1"</code>
+          functionSignature: func logReport(lines []string) string
+          difficulty: 2
+          testCases:
+            - input: logReport([]string{"INFO ok", "ERROR bad", "INFO ok2", "WARN slow", "ERROR oom"})
+              output: "\"INFO: 2\\nERROR: 2\\nWARN: 1\""
+            - input: logReport([]string{"DEBUG x", "DEBUG y", "DEBUG z"})
+              output: "\"DEBUG: 3\""
+            - input: logReport([]string{})
+              output: "\"\""
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                You need two steps: counting and sorting. What data structure counts things? What do you need to sort —
+                the map itself, or something extracted from it?
+            - title: 💡 Hint
+              content: >-
+                Count with <code>map[string]int</code>. To sort by count, create a slice of structs with level and
+                count, then use <code>sort.Slice</code>. Build the output with <code>fmt.Sprintf</code> and
+                <code>strings.Join</code>.
+          solution: |-
+            func logReport(lines []string) string {
+                counts := make(map[string]int)
+                for _, line := range lines {
+                    fields := strings.Fields(line)
+                    if len(fields) > 0 {
+                        counts[fields[0]]++
+                    }
+                }
+                type entry struct {
+                    level string
+                    count int
+                }
+                entries := make([]entry, 0, len(counts))
+                for k, v := range counts {
+                    entries = append(entries, entry{k, v})
+                }
+                sort.Slice(entries, func(i, j int) bool {
+                    return entries[i].count > entries[j].count
+                })
+                parts := make([]string, len(entries))
+                for i, e := range entries {
+                    parts[i] = fmt.Sprintf("%s: %d", e.level, e.count)
+                }
+                return strings.Join(parts, "\n")
+            }
+          annotations:
+            - type: pattern
+              label: Count-Sort-Format
+              text: >-
+                This three-step pattern (count with map → sort → format output) appears everywhere in infra tooling. Log
+                analysis, metric aggregation, resource reporting — same shape.
+        - id: v3
+          title: Level Frequency with Percentages
+          description: >-
+            Write <code>func logFrequency(lines []string) string</code> that takes log lines and returns a report with
+            each level, its count, AND its percentage of total, sorted by count descending.<br><br>Format: <code>"ERROR:
+            3 (37.5%)\nINFO: 3 (37.5%)\nWARN: 2 (25.0%)"</code>
+          functionSignature: func logFrequency(lines []string) string
+          difficulty: 3
+          testCases:
+            - input: logFrequency([]string{"INFO a", "ERROR b", "ERROR c"})
+              output: "\"ERROR: 2 (66.7%)\\nINFO: 1 (33.3%)\""
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                This builds on the Log Level Report — same count-sort pattern, but now you also need to compute
+                percentages. How do you format a float to one decimal place?
+            - title: 💡 Hint
+              content: >-
+                Reuse the count-sort pattern. For percentages: <code>float64(count) / float64(total) * 100</code>.
+                Format with <code>fmt.Sprintf("%s: %d (%.1f%%)", ...)</code>.
+          solution: |-
+            func logFrequency(lines []string) string {
+                if len(lines) == 0 {
+                    return ""
+                }
+                counts := make(map[string]int)
+                for _, line := range lines {
+                    fields := strings.Fields(line)
+                    if len(fields) > 0 {
+                        counts[fields[0]]++
+                    }
+                }
+                type entry struct {
+                    level string
+                    count int
+                }
+                entries := make([]entry, 0, len(counts))
+                for k, v := range counts {
+                    entries = append(entries, entry{k, v})
+                }
+                sort.Slice(entries, func(i, j int) bool {
+                    return entries[i].count > entries[j].count
+                })
+                total := len(lines)
+                parts := make([]string, len(entries))
+                for i, e := range entries {
+                    pct := float64(e.count) / float64(total) * 100
+                    parts[i] = fmt.Sprintf("%s: %d (%.1f%%)", e.level, e.count, pct)
+                }
+                return strings.Join(parts, "\n")
+            }
+    - id: challenge_2
+      block: 2
+      difficulty: 2
+      concept: String Parsing
+      variants:
+        - id: v1
+          title: Parse Metric Labels
+          description: >-
+            Write <code>func parseLabels(s string) map[string]string</code> that takes a Prometheus-style label string
+            like <code>method="GET",status="200"</code> and returns a map of label keys to values (without
+            quotes).<br><br>Example: <code>"method=\"GET\",status=\"200\""</code> → <code>map[method:GET
+            status:200]</code>
+          functionSignature: func parseLabels(s string) map[string]string
+          difficulty: 1
+          testCases:
+            - input: parseLabels("method=\"GET\",status=\"200\"")
+              output: map[method:GET status:200]
+            - input: parseLabels("app=\"nginx\"")
+              output: map[app:nginx]
+            - input: parseLabels("")
+              output: map[]
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                Break this into two steps: first split on commas to get individual pairs, then split each pair on
+                <code>=</code> to get key and value. What do you need to do to the value to remove the surrounding
+                quotes?
+            - title: 💡 Hint
+              content: >-
+                Use <code>strings.Split(s, ",")</code> for pairs. For each pair, <code>strings.SplitN(pair, "=",
+                2)</code> gives key and value. Remove quotes with <code>strings.Trim(val, "\"")</code>.
+          solution: |-
+            func parseLabels(s string) map[string]string {
+                result := make(map[string]string)
+                if s == "" {
+                    return result
+                }
+                pairs := strings.Split(s, ",")
+                for _, pair := range pairs {
+                    parts := strings.SplitN(pair, "=", 2)
+                    if len(parts) == 2 {
+                        key := parts[0]
+                        val := strings.Trim(parts[1], "\"")
+                        result[key] = val
+                    }
+                }
+                return result
+            }
+          annotations:
+            - type: infra
+              label: Prometheus Format
+              text: >-
+                This is the actual format Prometheus uses for metric labels. Tools like <code>promtool</code> parse this
+                exact syntax.
+        - id: v2
+          title: Parse Full Metric Line
+          description: >-
+            Write <code>func parseMetric(line string) (string, map[string]string, float64, error)</code> that parses a
+            full Prometheus metric line like <code>http_requests_total{method="GET",status="200"} 1027</code> and
+            returns the metric name, labels map, value, and any error.<br><br>Handle metrics with no labels too:
+            <code>up 1</code> → name="up", empty labels, value=1.
+          functionSignature: func parseMetric(line string) (string, map[string]string, float64, error)
+          difficulty: 2
+          testCases:
+            - input: parseMetric("http_requests{method=\"GET\"} 42")
+              output: "\"http_requests\", map[method:GET], 42.0, nil"
+            - input: parseMetric("up 1")
+              output: "\"up\", map[], 1.0, nil"
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                There are two formats: with labels (<code>name{labels} value</code>) and without (<code>name
+                value</code>). Check for the presence of <code>{</code> to determine which.
+            - title: 💡 Hint
+              content: >-
+                If <code>strings.Contains(line, "{")</code>: split on <code>{</code> for name, then find <code>}</code>
+                for labels, then parse the value after <code>} </code>. Reuse your label parser from the easier variant.
+                Parse the float with <code>strconv.ParseFloat</code>.
+          solution: |-
+            func parseMetric(line string) (string, map[string]string, float64, error) {
+                labels := make(map[string]string)
+                if strings.Contains(line, "{") {
+                    nameEnd := strings.Index(line, "{")
+                    name := line[:nameEnd]
+                    labelsEnd := strings.Index(line, "}")
+                    labelStr := line[nameEnd+1 : labelsEnd]
+                    if labelStr != "" {
+                        pairs := strings.Split(labelStr, ",")
+                        for _, pair := range pairs {
+                            parts := strings.SplitN(pair, "=", 2)
+                            if len(parts) == 2 {
+                                labels[parts[0]] = strings.Trim(parts[1], "\"")
+                            }
+                        }
+                    }
+                    valStr := strings.TrimSpace(line[labelsEnd+1:])
+                    val, err := strconv.ParseFloat(valStr, 64)
+                    if err != nil {
+                        return "", nil, 0, err
+                    }
+                    return name, labels, val, nil
+                }
+                parts := strings.Fields(line)
+                if len(parts) != 2 {
+                    return "", nil, 0, fmt.Errorf("invalid metric line: %s", line)
+                }
+                val, err := strconv.ParseFloat(parts[1], 64)
+                if err != nil {
+                    return "", nil, 0, err
+                }
+                return parts[0], labels, val, nil
+            }
+          annotations:
+            - type: complexity
+              label: String Scanning
+              text: >-
+                This solution scans the string multiple times with Index calls. For a real metrics parser handling
+                millions of lines, you'd use a single-pass scanner. For now, clarity wins over performance.
+            - type: interview
+              label: String Parsing
+              text: >-
+                Parsing structured text is a very common interview question. The key skill is breaking it into clear
+                steps: find boundaries, extract parts, parse values.
+        - id: v3
+          title: Aggregate Metrics by Name
+          description: >-
+            Write <code>func aggregateMetrics(lines []string) map[string]float64</code> that parses multiple Prometheus
+            metric lines and sums values by metric name (ignoring labels).<br><br>Example: given
+            <code>http_req{method="GET"} 10</code> and <code>http_req{method="POST"} 5</code>, return
+            <code>map[http_req:15]</code>.
+          functionSignature: func aggregateMetrics(lines []string) map[string]float64
+          difficulty: 3
+          testCases:
+            - input: aggregateMetrics([]string{"req{m=\"GET\"} 10", "req{m=\"POST\"} 5", "up 1"})
+              output: map[req:15 up:1]
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                You've already written a metric parser. Now loop through lines, parse each one, and accumulate values in
+                a map keyed by metric name.
+            - title: 💡 Hint
+              content: >-
+                Reuse <code>parseMetric</code> from the previous variant. Create <code>totals :=
+                make(map[string]float64)</code> and add each parsed value: <code>totals[name] += val</code>. Skip lines
+                that fail to parse.
+          solution: |-
+            func aggregateMetrics(lines []string) map[string]float64 {
+                totals := make(map[string]float64)
+                for _, line := range lines {
+                    line = strings.TrimSpace(line)
+                    if line == "" || strings.HasPrefix(line, "#") {
+                        continue
+                    }
+                    name, _, val, err := parseMetric(line)
+                    if err != nil {
+                        continue
+                    }
+                    totals[name] += val
+                }
+                return totals
+            }
+    - id: challenge_3
+      block: 3
+      difficulty: 2
+      concept: Sorting & Filtering
+      variants:
+        - id: v1
+          title: Sort Pods by Name
+          description: >-
+            Write <code>func sortPodNames(names []string) []string</code> that returns the input slice sorted
+            alphabetically. Sort in place and return the same slice.<br><br>Example: <code>["web-3", "api-1", "db-2",
+            "web-1"]</code> → <code>["api-1", "db-2", "web-1", "web-3"]</code>
+          functionSignature: func sortPodNames(names []string) []string
+          difficulty: 1
+          testCases:
+            - input: sortPodNames([]string{"web-3", "api-1", "db-2", "web-1"})
+              output: "[\"api-1\", \"db-2\", \"web-1\", \"web-3\"]"
+          hints:
+            - title: 🤔 Think about it
+              content: Go's sort package has a function specifically for string slices. What is it?
+            - title: 💡 Hint
+              content: Use <code>sort.Strings(names)</code> — it sorts in place. Then return the slice.
+          solution: |-
+            func sortPodNames(names []string) []string {
+                sort.Strings(names)
+                return names
+            }
+        - id: v2
+          title: Top N by Memory
+          description: >-
+            Given parallel slices of pod names and memory usage:<br><code>names := []string{"web-1", "api-1", "db-1",
+            "cache-1", "worker-1"}</code><br><code>memoryMB := []int{512, 256, 2048, 1024, 128}</code><br><br>Write
+            <code>func topByMemory(names []string, memoryMB []int, n int) []string</code> that returns the names of the
+            top <code>n</code> pods by memory usage (descending).
+          functionSignature: func topByMemory(names []string, memoryMB []int, n int) []string
+          difficulty: 2
+          testCases:
+            - input: topByMemory([]string{"web-1","api-1","db-1","cache-1","worker-1"}, []int{512,256,2048,1024,128}, 3)
+              output: "[\"db-1\", \"cache-1\", \"web-1\"]"
+            - input: topByMemory([]string{"a","b"}, []int{100,200}, 5)
+              output: "[\"b\", \"a\"]"
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                You have two parallel slices. To sort them together, you need to pair them up. What data structure lets
+                you keep a name and memory value together?
+            - title: 💡 Hint
+              content: >-
+                Create a struct <code>type pod struct { name string; mem int }</code>. Build a slice of these,
+                <code>sort.Slice</code> by mem descending, then take the first <code>n</code> names. Clamp
+                <code>n</code> to <code>len(pods)</code> if needed.
+          solution: |-
+            func topByMemory(names []string, memoryMB []int, n int) []string {
+                type pod struct {
+                    name string
+                    mem  int
+                }
+                pods := make([]pod, len(names))
+                for i := range names {
+                    pods[i] = pod{names[i], memoryMB[i]}
+                }
+                sort.Slice(pods, func(i, j int) bool {
+                    return pods[i].mem > pods[j].mem
+                })
+                if n > len(pods) {
+                    n = len(pods)
+                }
+                result := make([]string, n)
+                for i := 0; i < n; i++ {
+                    result[i] = pods[i].name
+                }
+                return result
+            }
+          annotations:
+            - type: pattern
+              label: Parallel Slice → Struct
+              text: >-
+                When you have parallel slices (names[i] goes with values[i]), zip them into a slice of structs first.
+                This is safer and makes sorting straightforward.
+            - type: interview
+              label: Top K Pattern
+              text: >-
+                "Find top K elements" is one of the most common interview questions. For small K, sort and slice. For
+                large data, use a min-heap (covered in Module 12).
+        - id: v3
+          title: Resource Usage Table
+          description: >-
+            Write <code>func resourceTable(names []string, cpuPercent []float64, memMB []int) string</code> that returns
+            a formatted table sorted by CPU usage descending.<br><br>Format each row as <code>"%-12s %6.1f%%
+            %6dMB"</code>.
+          functionSignature: func resourceTable(names []string, cpuPercent []float64, memMB []int) string
+          difficulty: 3
+          testCases:
+            - input: resourceTable([]string{"web","api"}, []float64{45.2, 82.3}, []int{256, 512})
+              output: "\"api           82.3%    512MB\\nweb           45.2%    256MB\""
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                Same pattern as Top N: zip into structs, sort, format. The new piece is <code>fmt.Sprintf</code> with
+                width specifiers.
+            - title: 💡 Hint
+              content: >-
+                Create a struct with name, cpu, mem. Sort by cpu descending. Format each with <code>fmt.Sprintf("%-12s
+                %6.1f%% %6dMB", ...)</code>. Join with <code>\n</code>.
+          solution: |-
+            func resourceTable(names []string, cpuPercent []float64, memMB []int) string {
+                type resource struct {
+                    name string
+                    cpu  float64
+                    mem  int
+                }
+                resources := make([]resource, len(names))
+                for i := range names {
+                    resources[i] = resource{names[i], cpuPercent[i], memMB[i]}
+                }
+                sort.Slice(resources, func(i, j int) bool {
+                    return resources[i].cpu > resources[j].cpu
+                })
+                lines := make([]string, len(resources))
+                for i, r := range resources {
+                    lines[i] = fmt.Sprintf("%-12s %6.1f%% %6dMB", r.name, r.cpu, r.mem)
+                }
+                return strings.Join(lines, "\n")
+            }
+    - id: challenge_4
+      block: 4
+      difficulty: 2
+      concept: String Parsing
+      variants:
+        - id: v1
+          title: Parse Env File
+          description: >-
+            Write <code>func parseEnvFile(content string) map[string]string</code> that parses a <code>.env</code> file.
+            Rules:<br>• Each line is <code>KEY=VALUE</code><br>• Lines starting with <code>#</code> are comments
+            (skip)<br>• Empty lines are skipped<br>• Trim whitespace on keys and values<br>• Strip optional surrounding
+            double quotes from values
+          functionSignature: func parseEnvFile(content string) map[string]string
+          difficulty: 1
+          testCases:
+            - input: parseEnvFile("A=1\nB=2")
+              output: map[A:1 B:2]
+            - input: parseEnvFile("# comment\nKEY=\"value\"")
+              output: map[KEY:value]
+            - input: parseEnvFile("  HOST = localhost  ")
+              output: map[HOST:localhost]
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                Split into lines. For each line: trim whitespace, skip empty/comments, split on first <code>=</code>,
+                trim key and value, strip quotes from value.
+            - title: 💡 Hint
+              content: >-
+                Use <code>strings.Split(content, "\n")</code> for lines. <code>strings.TrimSpace</code> for whitespace.
+                <code>strings.HasPrefix(line, "#")</code> for comments. <code>strings.SplitN(line, "=", 2)</code> for
+                key/value. <code>strings.Trim(val, "\"")</code> for quotes.
+          solution: |-
+            func parseEnvFile(content string) map[string]string {
+                result := make(map[string]string)
+                lines := strings.Split(content, "\n")
+                for _, line := range lines {
+                    line = strings.TrimSpace(line)
+                    if line == "" || strings.HasPrefix(line, "#") {
+                        continue
+                    }
+                    parts := strings.SplitN(line, "=", 2)
+                    if len(parts) != 2 {
+                        continue
+                    }
+                    key := strings.TrimSpace(parts[0])
+                    val := strings.TrimSpace(parts[1])
+                    val = strings.Trim(val, "\"")
+                    result[key] = val
+                }
+                return result
+            }
+          annotations:
+            - type: infra
+              label: .env Files
+              text: >-
+                This is the exact format used by Docker Compose, systemd EnvironmentFile, and tools like direnv. You'll
+                parse this format in real infra code.
+        - id: v2
+          title: Parse INI Sections
+          description: >-
+            Write <code>func parseINI(content string) map[string]map[string]string</code> that parses a simple INI file.
+            Rules:<br>• Section headers: <code>[section_name]</code><br>• Key-value pairs: <code>key = value</code>
+            under the current section<br>• Lines before any section go under <code>"default"</code><br>• Comments
+            (<code>#</code>) and empty lines are skipped
+          functionSignature: func parseINI(content string) map[string]map[string]string
+          difficulty: 2
+          testCases:
+            - input: parseINI("[db]\nhost=localhost")
+              output: map[db:map[host:localhost]]
+            - input: parseINI("key=val\n[s]\nk=v")
+              output: map[default:map[key:val] s:map[k:v]]
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                Track the "current section" as you loop through lines. When you see <code>[something]</code>, change the
+                current section. When you see <code>key=value</code>, add it to the current section's map.
+            - title: 💡 Hint
+              content: >-
+                Initialize <code>currentSection := "default"</code>. Detect section headers with
+                <code>strings.HasPrefix(line, "[")</code> and extract the name with <code>line[1:len(line)-1]</code>.
+                Create the inner map on first use with a nil check.
+          solution: |-
+            func parseINI(content string) map[string]map[string]string {
+                result := make(map[string]map[string]string)
+                currentSection := "default"
+                lines := strings.Split(content, "\n")
+                for _, line := range lines {
+                    line = strings.TrimSpace(line)
+                    if line == "" || strings.HasPrefix(line, "#") {
+                        continue
+                    }
+                    if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+                        currentSection = line[1 : len(line)-1]
+                        continue
+                    }
+                    parts := strings.SplitN(line, "=", 2)
+                    if len(parts) != 2 {
+                        continue
+                    }
+                    key := strings.TrimSpace(parts[0])
+                    val := strings.TrimSpace(parts[1])
+                    if result[currentSection] == nil {
+                        result[currentSection] = make(map[string]string)
+                    }
+                    result[currentSection][key] = val
+                }
+                return result
+            }
+          annotations:
+            - type: pattern
+              label: State Machine Parsing
+              text: >-
+                Tracking "current section" as you iterate is a simple state machine. The same pattern works for parsing
+                Dockerfiles (current stage), Terraform configs (current block), and K8s multi-doc YAML (current
+                document).
+        - id: v3
+          title: INI with Environment Variable Expansion
+          description: >-
+            Write <code>func parseINIExpand(content string, env map[string]string) map[string]map[string]string</code>
+            that parses an INI file like above, but also expands <code>${VAR}</code> references in values using the
+            provided env map. Unknown variables become empty strings.
+          functionSignature: func parseINIExpand(content string, env map[string]string) map[string]map[string]string
+          difficulty: 3
+          testCases:
+            - input: "parseINIExpand(\"[db]\\nhost=${DB_HOST}\\nport=5432\", map[string]string{\"DB_HOST\": \"prod-db\"})"
+              output: map[db:map[host:prod-db port:5432]]
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                Build on the INI parser. After extracting the value, scan for <code>${...}</code> patterns and replace
+                them with env lookups.
+            - title: 💡 Hint
+              content: >-
+                After parsing key=value, use <code>os.Expand(val, func(key string) string { return env[key] })</code> —
+                Go's stdlib has this built in! Or do it manually with <code>strings.ReplaceAll</code> in a loop.
+          solution: |-
+            func parseINIExpand(content string, env map[string]string) map[string]map[string]string {
+                result := make(map[string]map[string]string)
+                currentSection := "default"
+                lines := strings.Split(content, "\n")
+                for _, line := range lines {
+                    line = strings.TrimSpace(line)
+                    if line == "" || strings.HasPrefix(line, "#") {
+                        continue
+                    }
+                    if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+                        currentSection = line[1 : len(line)-1]
+                        continue
+                    }
+                    parts := strings.SplitN(line, "=", 2)
+                    if len(parts) != 2 {
+                        continue
+                    }
+                    key := strings.TrimSpace(parts[0])
+                    val := strings.TrimSpace(parts[1])
+                    val = os.Expand(val, func(k string) string {
+                        return env[k]
+                    })
+                    if result[currentSection] == nil {
+                        result[currentSection] = make(map[string]string)
+                    }
+                    result[currentSection][key] = val
+                }
+                return result
+            }
+          annotations:
+            - type: stdlib
+              label: os.Expand
+              text: >-
+                Go's <code>os.Expand</code> handles <code>${VAR}</code> and <code>$VAR</code> expansion with a custom
+                mapping function. Much cleaner than regex. Used internally by Docker and other tools.
