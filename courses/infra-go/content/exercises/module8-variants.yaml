@@ -1,0 +1,427 @@
+conceptLinks:
+  Handler Basics: "#the-handler-interface"
+  JSON Responses: "#writing-json-responses"
+  Middleware: "#middleware-pattern"
+  Health Endpoints: "#health--readiness-endpoints"
+sharedContent: {}
+variants:
+  warmups:
+    - id: warmup_1
+      concept: Handler Basics
+      variants:
+        - id: v1
+          title: Echo Handler
+          description: >-
+            Write a handler function that returns the HTTP method and path as plain text in the format <code>"METHOD
+            /path"</code>.
+          hints:
+            - >-
+              Use <code>r.Method</code> and <code>r.URL.Path</code>, then <code>fmt.Fprintf(w, "%s %s", r.Method,
+              r.URL.Path)</code>
+          solution: |-
+            func echoHandler(w http.ResponseWriter, r *http.Request) {
+                fmt.Fprintf(w, "%s %s", r.Method, r.URL.Path)
+            }
+        - id: v2
+          title: Not Found Handler
+          description: >-
+            Write a handler that returns a 404 Not Found with the message <code>"not found: /path"</code> for any
+            request.
+          hints:
+            - >-
+              Use <code>http.Error(w, "not found: "+r.URL.Path, http.StatusNotFound)</code> — it sets both the status
+              code and body
+          solution: |-
+            func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+                http.Error(w, "not found: "+r.URL.Path, http.StatusNotFound)
+            }
+    - id: warmup_2
+      concept: JSON Responses
+      variants:
+        - id: v1
+          title: Service Status JSON
+          description: >-
+            Write a function that writes a JSON service status response with <code>"service"</code>,
+            <code>"status"</code> ("healthy" or "unhealthy"), and <code>"uptime_seconds"</code> fields. Use status 200
+            for healthy, 503 for unhealthy.
+          hints:
+            - Set <code>Content-Type</code> to <code>application/json</code> before calling <code>WriteHeader</code>
+            - Use <code>json.NewEncoder(w).Encode(map[string]any{...})</code> to write the JSON body
+          solution: |-
+            func writeServiceStatus(w http.ResponseWriter, service string, healthy bool, uptimeSec int) {
+                status := "healthy"
+                code := http.StatusOK
+                if !healthy {
+                    status = "unhealthy"
+                    code = http.StatusServiceUnavailable
+                }
+                w.Header().Set("Content-Type", "application/json")
+                w.WriteHeader(code)
+                json.NewEncoder(w).Encode(map[string]any{
+                    "service":        service,
+                    "status":         status,
+                    "uptime_seconds": uptimeSec,
+                })
+            }
+        - id: v2
+          title: Validate Deployment JSON
+          description: >-
+            Write a handler that parses a JSON request body with <code>{"name": string, "replicas": int}</code>. Return
+            400 if JSON is invalid, name is empty, or replicas < 1. Otherwise return 200 with <code>{"valid":
+            true}</code>.
+          hints:
+            - Decode with <code>json.NewDecoder(r.Body).Decode(&req)</code>. Check error first, then validate fields.
+            - Use <code>http.Error(w, msg, http.StatusBadRequest)</code> for each validation failure
+          solution: |-
+            func validateDeployment(w http.ResponseWriter, r *http.Request) {
+                var req struct {
+                    Name     string `json:"name"`
+                    Replicas int    `json:"replicas"`
+                }
+                if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+                    http.Error(w, "invalid JSON", http.StatusBadRequest)
+                    return
+                }
+                if req.Name == "" {
+                    http.Error(w, "name is required", http.StatusBadRequest)
+                    return
+                }
+                if req.Replicas < 1 {
+                    http.Error(w, "replicas must be >= 1", http.StatusBadRequest)
+                    return
+                }
+                w.Header().Set("Content-Type", "application/json")
+                json.NewEncoder(w).Encode(map[string]any{"valid": true})
+            }
+    - id: warmup_3
+      concept: Middleware
+      variants:
+        - id: v1
+          title: Request ID Middleware
+          description: >-
+            Write a middleware that adds an <code>X-Request-ID</code> header to every response. Generate the ID using
+            <code>fmt.Sprintf("req-%d", time.Now().UnixNano())</code>.
+          hints:
+            - Set the response header BEFORE calling <code>next.ServeHTTP(w, r)</code>
+            - Return <code>http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { ... })</code>
+          solution: |-
+            func requestIDMiddleware(next http.Handler) http.Handler {
+                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+                    w.Header().Set("X-Request-ID", fmt.Sprintf("req-%d", time.Now().UnixNano()))
+                    next.ServeHTTP(w, r)
+                })
+            }
+        - id: v2
+          title: API Key Middleware
+          description: >-
+            Write a configurable middleware that rejects requests without a valid API key in the <code>X-API-Key</code>
+            header. Valid keys are passed as a <code>map[string]bool</code>. Return 401 if missing, 403 if invalid.
+          hints:
+            - >-
+              The outer function captures the config: <code>func apiKeyAuth(keys map[string]bool) func(http.Handler)
+              http.Handler</code>
+            - Check <code>r.Header.Get("X-API-Key")</code> — empty means 401, not in map means 403
+          solution: |-
+            func apiKeyAuth(validKeys map[string]bool) func(http.Handler) http.Handler {
+                return func(next http.Handler) http.Handler {
+                    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+                        key := r.Header.Get("X-API-Key")
+                        if key == "" {
+                            http.Error(w, "missing API key", http.StatusUnauthorized)
+                            return
+                        }
+                        if !validKeys[key] {
+                            http.Error(w, "invalid API key", http.StatusForbidden)
+                            return
+                        }
+                        next.ServeHTTP(w, r)
+                    })
+                }
+            }
+  challenges:
+    - id: challenge_1
+      block: 1
+      difficulty: 1
+      concept: Health Endpoints
+      variants:
+        - id: v1
+          title: Simple Health Check
+          description: Write a health check handler that returns JSON <code>{"status":"ok"}</code> with status 200.
+          functionSignature: func healthHandler(w http.ResponseWriter, r *http.Request)
+          difficulty: 1
+          testCases:
+            - input: GET /healthz
+              output: status 200, {"status":"ok"}
+          hints:
+            - title: 🤔 Think about it
+              content: What Content-Type header should a JSON response have?
+            - title: 💡 Hint
+              content: Set Content-Type to application/json, WriteHeader(200), then json.NewEncoder(w).Encode the map.
+          solution: |-
+            func healthHandler(w http.ResponseWriter, r *http.Request) {
+                w.Header().Set("Content-Type", "application/json")
+                w.WriteHeader(http.StatusOK)
+                json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+            }
+          annotations:
+            - type: stdlib
+              label: json.NewEncoder
+              text: json.NewEncoder writes directly to any io.Writer — ResponseWriter implements io.Writer
+        - id: v2
+          title: Readiness with Dependency Checks
+          description: >-
+            Write a readiness handler factory that takes a map of dependency checks (<code>map[string]func()
+            error</code>). Run all checks. Return JSON with each dependency's status and overall 200 (all healthy) or
+            503 (any unhealthy).
+          functionSignature: func readinessHandler(checks map[string]func() error) http.HandlerFunc
+          difficulty: 2
+          testCases:
+            - input: all checks return nil
+              output: status 200, {"database":"healthy","cache":"healthy"}
+            - input: database returns error
+              output: "status 503, {\"database\":\"unhealthy: connection refused\",\"cache\":\"healthy\"}"
+          hints:
+            - title: 🤔 Think about it
+              content: Should you stop checking after the first failure, or check all and aggregate?
+            - title: 💡 Hint
+              content: >-
+                Iterate all checks, build a results map. If any check fails, set status to 503. Write the aggregated
+                results as JSON.
+          solution: |-
+            func readinessHandler(checks map[string]func() error) http.HandlerFunc {
+                return func(w http.ResponseWriter, r *http.Request) {
+                    status := http.StatusOK
+                    results := make(map[string]string)
+                    for name, check := range checks {
+                        if err := check(); err != nil {
+                            status = http.StatusServiceUnavailable
+                            results[name] = "unhealthy: " + err.Error()
+                        } else {
+                            results[name] = "healthy"
+                        }
+                    }
+                    w.Header().Set("Content-Type", "application/json")
+                    w.WriteHeader(status)
+                    json.NewEncoder(w).Encode(results)
+                }
+            }
+          annotations:
+            - type: pattern
+              label: Aggregate Health Checks
+              text: Check all dependencies and aggregate — partial health gives operators more info than fail-fast
+            - type: interview
+              label: K8s Health Checks
+              text: Health endpoints with dependency checks are standard K8s interview topics
+        - id: v3
+          title: Health Server with Timeouts
+          description: >-
+            Build a health mux with <code>/healthz</code> (liveness) and <code>/readyz</code> (readiness). The readiness
+            endpoint runs dependency checks concurrently with a per-check timeout. If a check exceeds the timeout,
+            report it as <code>"unhealthy: timeout"</code>.
+          functionSignature: func newHealthMux(checks map[string]func(context.Context) error, checkTimeout time.Duration) *http.ServeMux
+          difficulty: 3
+          testCases:
+            - input: GET /healthz
+              output: status 200, {"status":"ok"}
+            - input: GET /readyz, all pass
+              output: status 200 with all healthy
+            - input: GET /readyz, one check exceeds timeout
+              output: "status 503, that check shows \"unhealthy: timeout\""
+          hints:
+            - title: 🤔 Think about it
+              content: How do you enforce a per-check timeout? What if the check function blocks forever?
+            - title: 💡 Hint
+              content: >-
+                For each check, create a context with timeout. Run the check in a goroutine, use select on the result
+                channel and ctx.Done(). Register both /healthz and /readyz on the mux.
+          solution: >-
+            func newHealthMux(checks map[string]func(context.Context) error, checkTimeout time.Duration) *http.ServeMux
+            {
+                mux := http.NewServeMux()
+                mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+                    w.Header().Set("Content-Type", "application/json")
+                    json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+                })
+                mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
+                    type result struct {
+                        name string
+                        err  error
+                    }
+                    ch := make(chan result, len(checks))
+                    for name, check := range checks {
+                        go func(n string, fn func(context.Context) error) {
+                            ctx, cancel := context.WithTimeout(r.Context(), checkTimeout)
+                            defer cancel()
+                            ch <- result{n, fn(ctx)}
+                        }(name, check)
+                    }
+                    status := http.StatusOK
+                    results := make(map[string]string)
+                    for i := 0; i < len(checks); i++ {
+                        r := <-ch
+                        if r.err != nil {
+                            status = http.StatusServiceUnavailable
+                            if r.err == context.DeadlineExceeded {
+                                results[r.name] = "unhealthy: timeout"
+                            } else {
+                                results[r.name] = "unhealthy: " + r.err.Error()
+                            }
+                        } else {
+                            results[r.name] = "healthy"
+                        }
+                    }
+                    w.Header().Set("Content-Type", "application/json")
+                    w.WriteHeader(status)
+                    json.NewEncoder(w).Encode(results)
+                })
+                return mux
+            }
+          annotations:
+            - type: pattern
+              label: Concurrent Timeout Checks
+              text: Concurrent dependency checks with per-check timeout — combines goroutines, context, and channels
+            - type: gotcha
+              label: DeadlineExceeded Check
+              text: Always check context.DeadlineExceeded to distinguish timeouts from other errors
+    - id: challenge_2
+      block: 2
+      difficulty: 1
+      concept: Middleware
+      variants:
+        - id: v1
+          title: CORS Middleware
+          description: "Write a CORS middleware that adds <code>Access-Control-Allow-Origin: *</code> to every response."
+          functionSignature: func corsMiddleware(next http.Handler) http.Handler
+          difficulty: 1
+          testCases:
+            - input: GET /api/pods
+              output: "response has Access-Control-Allow-Origin: * header"
+            - input: OPTIONS /api/pods
+              output: response has CORS header, handler still called
+          hints:
+            - title: 🤔 Think about it
+              content: Should you set the header before or after calling the next handler?
+            - title: 💡 Hint
+              content: >-
+                Set <code>w.Header().Set("Access-Control-Allow-Origin", "*")</code> before calling
+                <code>next.ServeHTTP(w, r)</code>.
+          solution: |-
+            func corsMiddleware(next http.Handler) http.Handler {
+                return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+                    w.Header().Set("Access-Control-Allow-Origin", "*")
+                    next.ServeHTTP(w, r)
+                })
+            }
+          annotations:
+            - type: idiom
+              label: Middleware Signature
+              text: func(next http.Handler) http.Handler is THE middleware signature in Go
+        - id: v2
+          title: Per-IP Rate Limiter
+          description: >-
+            Write a rate limiting middleware that allows at most N requests per IP per minute. Return 429 Too Many
+            Requests when exceeded. Use a <code>map[string]int</code> protected by <code>sync.Mutex</code>, reset every
+            60 seconds by a background goroutine.
+          functionSignature: func rateLimitMiddleware(maxPerMinute int) func(http.Handler) http.Handler
+          difficulty: 2
+          testCases:
+            - input: 5 requests from 10.0.0.1, limit 10
+              output: all pass through
+            - input: 11 requests from 10.0.0.1, limit 10
+              output: first 10 pass, 11th returns 429
+            - input: 10 each from two IPs, limit 10
+              output: all pass (separate counters)
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                How do you get the client IP from an http.Request? How do you protect the shared map from concurrent
+                access?
+            - title: 💡 Hint
+              content: >-
+                Use <code>r.RemoteAddr</code> for the IP. Lock the mutex, check and increment. If over limit, return
+                429. Start a goroutine with <code>time.NewTicker</code> to reset the map every minute.
+          solution: |-
+            func rateLimitMiddleware(maxPerMinute int) func(http.Handler) http.Handler {
+                var mu sync.Mutex
+                counts := make(map[string]int)
+                go func() {
+                    ticker := time.NewTicker(time.Minute)
+                    defer ticker.Stop()
+                    for range ticker.C {
+                        mu.Lock()
+                        counts = make(map[string]int)
+                        mu.Unlock()
+                    }
+                }()
+                return func(next http.Handler) http.Handler {
+                    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+                        ip := r.RemoteAddr
+                        mu.Lock()
+                        counts[ip]++
+                        current := counts[ip]
+                        mu.Unlock()
+                        if current > maxPerMinute {
+                            http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+                            return
+                        }
+                        next.ServeHTTP(w, r)
+                    })
+                }
+            }
+          annotations:
+            - type: pattern
+              label: Closure-Based Middleware
+              text: Configurable middleware with closure captures config, mutex protects shared state
+            - type: gotcha
+              label: RemoteAddr Includes Port
+              text: r.RemoteAddr includes port (e.g. 10.0.0.1:54321) — in production, parse the IP or use X-Forwarded-For
+        - id: v3
+          title: Middleware Chain Builder
+          description: >-
+            Write a <code>Chain</code> function that composes middleware. Then build a full pipeline: recovery (catches
+            panics → 500) → logging (method, path, duration via slog) → auth (checks Bearer token) → handler.
+            <code>Chain(a, b, c)(h)</code> should equal <code>a(b(c(h)))</code>.
+          functionSignature: func Chain(middlewares ...func(http.Handler) http.Handler) func(http.Handler) http.Handler
+          difficulty: 3
+          testCases:
+            - input: Chain(mw1, mw2, mw3)(handler)
+              output: equivalent to mw1(mw2(mw3(handler)))
+            - input: valid Bearer token
+              output: logs request and calls handler
+            - input: no token
+              output: returns 401, still logged
+            - input: handler panics
+              output: recovery catches it, returns 500, logged
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                In what order should you iterate the middleware slice? If you Chain(a, b, c), which runs first on each
+                request?
+            - title: 💡 Hint
+              content: >-
+                Iterate in reverse: <code>for i := len(mws)-1; i >= 0; i-- { handler = mws[i](handler) }</code>. This
+                makes the first middleware in the slice the outermost wrapper.
+          solution: |-
+            func Chain(mws ...func(http.Handler) http.Handler) func(http.Handler) http.Handler {
+                return func(handler http.Handler) http.Handler {
+                    for i := len(mws) - 1; i >= 0; i-- {
+                        handler = mws[i](handler)
+                    }
+                    return handler
+                }
+            }
+
+            // Usage:
+            pipeline := Chain(
+                recoveryMiddleware,
+                loggingMiddleware,
+                authMiddleware,
+            )
+            http.ListenAndServe(":8080", pipeline(mux))
+          annotations:
+            - type: pattern
+              label: Middleware Composition
+              text: Middleware composition — reverse iteration makes Chain(a,b,c)(h) = a(b(c(h))), so request flows a→b→c→h
+            - type: interview
+              label: Middleware Ordering
+              text: Understanding middleware ordering and composition is a common Go web interview topic

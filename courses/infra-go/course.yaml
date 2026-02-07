@@ -1,0 +1,107 @@
+course:
+  name: "Infrastructure Development with Go"
+  slug: infra-go
+  description: "From DevOps engineer to infrastructure developer. Build real infra tools, nail Go fundamentals under pressure, and ace technical interviews. 14 modules, 5 projects, algorithms throughout."
+  storagePrefix: infra-go
+
+tracks:
+  - title: Fundamentals Through Infra
+    modules: [0, 1, 2, 3]
+  - title: CLI & API Tools
+    modules: [4, 5]
+  - title: Concurrency
+    modules: [6, 7]
+  - title: Networking & Infrastructure
+    modules: [8, 9, 10, 11]
+  - title: Level Up
+    modules: [12, 13]
+
+modules:
+  - title: Reference & Setup
+    description: "Go toolchain, project layout, editor setup, and quick reference. Your cheat sheet for the course."
+    hasExercises: false
+
+  - title: Data Manipulation Bootcamp
+    description: "Slice indexing, in-place operations, map patterns, string parsing. Every exercise uses infra data: log lines, metric labels, config entries."
+
+  - title: Pointers, Structs & Interfaces
+    description: "Pointers and nil, model real infrastructure with structs, compose with embedding, and design small interfaces the Go way."
+
+  - title: Errors, Testing & Confidence
+    description: "Error wrapping, sentinel errors, table-driven tests. You test everything from here on."
+
+  - title: CLI Design & Config Parsing
+    description: "Build real CLI tools with Cobra. Parse YAML, JSON, and TOML configs. Validate and lint."
+
+  - title: HTTP Clients & API Integration
+    description: "Talk to APIs, handle auth, paginate results. Build tools that query cloud providers."
+
+  - title: Goroutines & Channels
+    description: "Launch concurrent work, collect results, coordinate with WaitGroups. The basics of Go's superpower."
+
+  - title: Concurrency Patterns
+    description: "Fan-out/fan-in, worker pools, rate limiting, select. Context, cancellation, graceful shutdown."
+
+  - title: HTTP Servers & Middleware
+    description: "Build APIs, not just consume them. Routing, middleware chains, health endpoints, structured logging."
+
+  - title: Networking & Protocols
+    description: "TCP/UDP from scratch, DNS wire format, gRPC and protobuf. Understand the network layer."
+
+  - title: Container Internals
+    description: "What Docker actually does: namespaces, cgroups, pivot_root from Go. 20 years of Linux, now understand it from code."
+
+  - title: Kubernetes from Go
+    description: "client-go, informers, reconciliation loops. Build an operator that watches custom resources."
+
+  - title: Algorithm Patterns
+    description: "Hash maps, two pointers, sliding window, binary search, stacks. Infra-themed problems, interview-ready patterns."
+
+  - title: Reading & Contributing to Open Source
+    description: "Navigate K8s, Terraform, Prometheus codebases. Find good-first-issues. Make a real contribution."
+    hasExercises: false
+
+projects:
+  - id: p1
+    num: P1
+    title: Config Linter
+    file: project-config-linter
+    afterModule: 4
+    description: "Build a CLI that reads K8s and Terraform YAML, validates against rules, and reports violations. Applies Modules 1-4."
+
+  - id: p2
+    num: P2
+    title: Cloud Resource Reporter
+    file: project-cloud-reporter
+    afterModule: 5
+    description: "Query cloud APIs, aggregate resource data, output formatted reports. Applies Modules 1-5."
+
+  - id: p3
+    num: P3
+    title: DNS Server
+    file: project-dns-server
+    afterModule: 9
+    description: "Build a DNS server from scratch. Parse binary DNS packets, resolve queries, handle concurrent requests. Applies Modules 6-9."
+
+  - id: p4
+    num: P4
+    title: Mini Container Runtime
+    file: project-container-runtime
+    afterModule: 10
+    description: "Build a minimal container runtime using Linux namespaces and cgroups. Run isolated processes with resource limits. Applies Module 10."
+
+  - id: p5
+    num: P5
+    title: K8s Operator
+    file: project-k8s-operator
+    afterModule: 11
+    description: "Build a Kubernetes operator that watches a custom resource and reconciles desired state. Applies Module 11."
+
+annotationTypes:
+  idiom: { icon: "Go", cssClass: ann-idiom }
+  complexity: { icon: "O", cssClass: ann-complexity }
+  gotcha: { icon: "!", cssClass: ann-gotcha }
+  alternative: { icon: alt, cssClass: ann-alternative }
+  stdlib: { icon: pkg, cssClass: ann-stdlib }
+  pattern: { icon: "P", cssClass: ann-pattern }
+  interview: { icon: "?", cssClass: ann-interview }

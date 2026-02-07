@@ -1,0 +1,1297 @@
+conceptLinks:
+  Errors as Values: "#errors-as-values"
+  Wrapping: "#wrapping--unwrapping"
+  Sentinel Errors: "#sentinel--custom-errors"
+  Writing Tests: "#writing-your-first-tests"
+  Table-Driven Tests: "#table-driven-tests"
+  Testing Infra Code: "#testing-infra-code"
+sharedContent: {}
+variants:
+  warmups:
+    - id: warmup_1
+      concept: Errors as Values
+      variants:
+        - id: v1
+          title: Return an Error
+          description: >-
+            Write a function <code>divide(a, b int) (int, error)</code> that returns an error if <code>b</code> is zero.
+            Otherwise return <code>a / b</code>.
+          hints:
+            - Return <code>(0, fmt.Errorf("division by zero"))</code> when b == 0
+            - Return <code>(a / b, nil)</code> for the success case
+          solution: |-
+            func divide(a, b int) (int, error) {
+                if b == 0 {
+                    return 0, fmt.Errorf("division by zero")
+                }
+                return a / b, nil
+            }
+        - id: v2
+          title: Handle or Propagate
+          description: >-
+            Given <code>func readConfig(path string) (string, error)</code> that may fail, write a function
+            <code>loadApp(path string) error</code> that calls readConfig and wraps any error with context
+            <code>"loading app config"</code>. On success, print the config.
+          hints:
+            - "Use <code>fmt.Errorf(\"loading app config: %w\", err)</code> to wrap"
+            - Check <code>if err != nil</code> immediately after the call
+          solution: |-
+            func loadApp(path string) error {
+                cfg, err := readConfig(path)
+                if err != nil {
+                    return fmt.Errorf("loading app config: %w", err)
+                }
+                fmt.Println(cfg)
+                return nil
+            }
+        - id: v3
+          title: Multiple Error Returns
+          description: >-
+            Write <code>parseHostPort(s string) (string, int, error)</code> that splits a string like
+            <code>"localhost:8080"</code> on <code>":"</code>, validates the port is a number with
+            <code>strconv.Atoi</code>, and returns host, port, error.
+          hints:
+            - Use <code>strings.SplitN(s, ":", 2)</code> — returns at most 2 parts
+            - If len(parts) != 2, return an error. Then parse parts[1] with strconv.Atoi.
+          solution: |-
+            func parseHostPort(s string) (string, int, error) {
+                parts := strings.SplitN(s, ":", 2)
+                if len(parts) != 2 {
+                    return "", 0, fmt.Errorf("invalid host:port format: %q", s)
+                }
+                port, err := strconv.Atoi(parts[1])
+                if err != nil {
+                    return "", 0, fmt.Errorf("invalid port %q: %w", parts[1], err)
+                }
+                return parts[0], port, nil
+            }
+    - id: warmup_2
+      concept: Wrapping
+      variants:
+        - id: v1
+          title: Wrap with Context
+          description: >-
+            Write a function <code>fetchPodConfig(pod, namespace string) (string, error)</code> that calls a
+            hypothetical <code>readFile(path string) (string, error)</code> with path
+            <code>"/etc/pods/namespace/pod.yaml"</code>. Wrap any error with the pod name and namespace.
+          hints:
+            - Build path with <code>fmt.Sprintf("/etc/pods/%s/%s.yaml", namespace, pod)</code>
+            - "Wrap: <code>fmt.Errorf(\"fetching config for %s/%s: %w\", namespace, pod, err)</code>"
+          solution: |-
+            func fetchPodConfig(pod, namespace string) (string, error) {
+                path := fmt.Sprintf("/etc/pods/%s/%s.yaml", namespace, pod)
+                data, err := readFile(path)
+                if err != nil {
+                    return "", fmt.Errorf("fetching config for %s/%s: %w", namespace, pod, err)
+                }
+                return data, nil
+            }
+        - id: v2
+          title: Check with errors.Is
+          description: >-
+            Write a function <code>configExists(path string) bool</code> that calls <code>os.Stat(path)</code>. Use
+            <code>errors.Is</code> to check if the error is <code>os.ErrNotExist</code>. Return true if the file exists,
+            false if it doesn't. For any other error, print the error and return false.
+          hints:
+            - <code>os.Stat</code> returns <code>(FileInfo, error)</code>
+            - Use <code>errors.Is(err, os.ErrNotExist)</code> to specifically detect missing files
+          solution: |-
+            func configExists(path string) bool {
+                _, err := os.Stat(path)
+                if err == nil {
+                    return true
+                }
+                if errors.Is(err, os.ErrNotExist) {
+                    return false
+                }
+                fmt.Printf("unexpected error checking %s: %v\n", path, err)
+                return false
+            }
+        - id: v3
+          title: Extract with errors.As
+          description: >-
+            Given a function that returns errors, write code that checks if the error is a <code>*net.OpError</code>
+            (has Op and Addr fields). If it is, print the operation and address. If not, print the raw error.
+          hints:
+            - Declare <code>var opErr *net.OpError</code> then use <code>errors.As(err, &opErr)</code>
+            - If As returns true, access <code>opErr.Op</code> and <code>opErr.Addr</code>
+          solution: |-
+            var opErr *net.OpError
+            if errors.As(err, &opErr) {
+                fmt.Printf("operation %s failed on %v\n", opErr.Op, opErr.Addr)
+            } else {
+                fmt.Printf("error: %v\n", err)
+            }
+    - id: warmup_3
+      concept: Sentinel Errors
+      variants:
+        - id: v1
+          title: Define Sentinels
+          description: >-
+            Define sentinel errors <code>ErrNotFound</code> and <code>ErrInvalidConfig</code> at package level. Write a
+            function <code>getConfig(key string, store map[string]string) (string, error)</code> that returns
+            <code>ErrNotFound</code> if the key doesn't exist, and <code>ErrInvalidConfig</code> if the value is empty.
+          hints:
+            - "Define: <code>var ErrNotFound = errors.New(\"not found\")</code>"
+            - "Use comma-ok on the map: <code>val, ok := store[key]</code>"
+          solution: |-
+            var (
+                ErrNotFound      = errors.New("not found")
+                ErrInvalidConfig = errors.New("invalid config")
+            )
+
+            func getConfig(key string, store map[string]string) (string, error) {
+                val, ok := store[key]
+                if !ok {
+                    return "", ErrNotFound
+                }
+                if val == "" {
+                    return "", ErrInvalidConfig
+                }
+                return val, nil
+            }
+        - id: v2
+          title: Custom Error Type
+          description: >-
+            Define a <code>PortError</code> struct with <code>Port int</code> and <code>Reason string</code> fields.
+            Implement the <code>error</code> interface. Write <code>validatePort(port int) error</code> that returns a
+            <code>*PortError</code> for invalid ports (< 1 or > 65535).
+          hints:
+            - Implement <code>func (e *PortError) Error() string</code>
+            - "Return <code>&PortError{Port: port, Reason: \"...\"}</code> for failures"
+          solution: |-
+            type PortError struct {
+                Port   int
+                Reason string
+            }
+
+            func (e *PortError) Error() string {
+                return fmt.Sprintf("invalid port %d: %s", e.Port, e.Reason)
+            }
+
+            func validatePort(port int) error {
+                if port < 1 {
+                    return &PortError{Port: port, Reason: "must be >= 1"}
+                }
+                if port > 65535 {
+                    return &PortError{Port: port, Reason: "must be <= 65535"}
+                }
+                return nil
+            }
+        - id: v3
+          title: Wrap a Sentinel
+          description: >-
+            Write <code>findService(name, namespace string) (Service, error)</code>. If not found, return
+            <code>ErrNotFound</code> <em>wrapped with context</em>: <code>"service web in namespace prod: not
+            found"</code>. The caller should still be able to check <code>errors.Is(err, ErrNotFound)</code>.
+          hints:
+            - "Use <code>fmt.Errorf(\"service %s in namespace %s: %w\", name, namespace, ErrNotFound)</code>"
+            - The %w verb preserves the sentinel so errors.Is still works
+          solution: |-
+            var ErrNotFound = errors.New("not found")
+
+            func findService(name, namespace string) (Service, error) {
+                // ... lookup logic ...
+                return Service{}, fmt.Errorf("service %s in namespace %s: %w", name, namespace, ErrNotFound)
+            }
+    - id: warmup_4
+      concept: Writing Tests
+      variants:
+        - id: v1
+          title: First Test
+          description: >-
+            Write a test for <code>func Add(a, b int) int</code>. Test that <code>Add(2, 3)</code> returns 5 and
+            <code>Add(-1, 1)</code> returns 0.
+          hints:
+            - "Test function: <code>func TestAdd(t *testing.T)</code>"
+            - Use <code>t.Errorf("got %d, want %d", got, want)</code> for failures
+          solution: |-
+            func TestAdd(t *testing.T) {
+                got := Add(2, 3)
+                if got != 5 {
+                    t.Errorf("Add(2, 3) = %d, want 5", got)
+                }
+
+                got = Add(-1, 1)
+                if got != 0 {
+                    t.Errorf("Add(-1, 1) = %d, want 0", got)
+                }
+            }
+        - id: v2
+          title: Test Error Cases
+          description: >-
+            Write a test for <code>func ParsePort(s string) (int, error)</code>. Test that <code>"8080"</code> returns
+            8080 with no error, and <code>"abc"</code> returns an error. Use <code>t.Fatal</code> when an unexpected
+            error would make the rest of the test meaningless.
+          hints:
+            - "For the happy path: <code>if err != nil { t.Fatalf(...) }</code>, then check the value"
+            - "For the error path: <code>if err == nil { t.Fatal(\"expected error\") }</code>"
+          solution: |-
+            func TestParsePort(t *testing.T) {
+                port, err := ParsePort("8080")
+                if err != nil {
+                    t.Fatalf("unexpected error: %v", err)
+                }
+                if port != 8080 {
+                    t.Errorf("got %d, want 8080", port)
+                }
+            }
+
+            func TestParsePort_Invalid(t *testing.T) {
+                _, err := ParsePort("abc")
+                if err == nil {
+                    t.Fatal("expected error for invalid port, got nil")
+                }
+            }
+        - id: v3
+          title: Test with Helper
+          description: >-
+            Write a test helper <code>assertError(t *testing.T, err error, wantMsg string)</code> that checks: (1) err
+            is not nil, (2) err.Error() contains wantMsg. Call <code>t.Helper()</code> so failures report the caller's
+            line. Use it to test a function.
+          hints:
+            - "First line: <code>t.Helper()</code>"
+            - Use <code>strings.Contains(err.Error(), wantMsg)</code> to check the message
+          solution: |-
+            func assertError(t *testing.T, err error, wantMsg string) {
+                t.Helper()
+                if err == nil {
+                    t.Fatal("expected error, got nil")
+                }
+                if !strings.Contains(err.Error(), wantMsg) {
+                    t.Errorf("error %q should contain %q", err.Error(), wantMsg)
+                }
+            }
+
+            func TestValidate(t *testing.T) {
+                err := validatePort(-1)
+                assertError(t, err, "must be >= 1")
+            }
+    - id: warmup_5
+      concept: Table-Driven Tests
+      variants:
+        - id: v1
+          title: Table Test for ParsePort
+          description: >-
+            Convert individual <code>TestParsePort</code> tests into a single table-driven test. Include cases:
+            <code>"8080"→8080</code>, <code>"1"→1</code>, <code>"65535"→65535</code>, <code>"0"→error</code>,
+            <code>"abc"→error</code>, <code>""→error</code>.
+          hints:
+            - "Define: <code>tests := []struct{ name, input string; want int; wantErr bool }{...}</code>"
+            - Loop with <code>for _, tt := range tests { t.Run(tt.name, func(t *testing.T) { ... }) }</code>
+          solution: |-
+            func TestParsePort(t *testing.T) {
+                tests := []struct {
+                    name    string
+                    input   string
+                    want    int
+                    wantErr bool
+                }{
+                    {"valid 8080", "8080", 8080, false},
+                    {"valid 1", "1", 1, false},
+                    {"valid 65535", "65535", 65535, false},
+                    {"zero", "0", 0, true},
+                    {"not a number", "abc", 0, true},
+                    {"empty", "", 0, true},
+                }
+                for _, tt := range tests {
+                    t.Run(tt.name, func(t *testing.T) {
+                        got, err := ParsePort(tt.input)
+                        if tt.wantErr {
+                            if err == nil {
+                                t.Error("expected error, got nil")
+                            }
+                            return
+                        }
+                        if err != nil {
+                            t.Fatalf("unexpected error: %v", err)
+                        }
+                        if got != tt.want {
+                            t.Errorf("got %d, want %d", got, tt.want)
+                        }
+                    })
+                }
+            }
+        - id: v2
+          title: Table Test for Validation
+          description: >-
+            Write a table-driven test for <code>func ValidatePodName(name string) error</code>. Valid names: lowercase
+            alphanumeric + hyphens, 1-63 chars. Test at least 6 cases covering valid names, empty string, too long, and
+            invalid characters.
+          hints:
+            - Use <code>wantErr bool</code> in the test struct
+            - "Edge cases: empty string, 63-char name, 64-char name, uppercase, special chars"
+          solution: |-
+            func TestValidatePodName(t *testing.T) {
+                tests := []struct {
+                    name    string
+                    input   string
+                    wantErr bool
+                }{
+                    {"valid simple", "web-1", false},
+                    {"valid long", "my-very-long-pod-name-123", false},
+                    {"empty", "", true},
+                    {"too long", strings.Repeat("a", 64), true},
+                    {"max length", strings.Repeat("a", 63), false},
+                    {"uppercase", "Web-1", true},
+                    {"spaces", "web 1", true},
+                    {"underscores", "web_1", true},
+                }
+                for _, tt := range tests {
+                    t.Run(tt.name, func(t *testing.T) {
+                        err := ValidatePodName(tt.input)
+                        if tt.wantErr && err == nil {
+                            t.Error("expected error, got nil")
+                        }
+                        if !tt.wantErr && err != nil {
+                            t.Errorf("unexpected error: %v", err)
+                        }
+                    })
+                }
+            }
+        - id: v3
+          title: Table Test with Error Messages
+          description: >-
+            Write a table-driven test for <code>func NewService(name string, port int) (Service, error)</code>. Instead
+            of just <code>wantErr bool</code>, use <code>wantErr string</code> to check the error message contains the
+            expected text. Test valid input, empty name, and invalid port.
+          hints:
+            - "<code>wantErr: \"\"</code> means no error expected; non-empty means error containing that text"
+            - Use <code>strings.Contains(err.Error(), tt.wantErr)</code>
+          solution: |-
+            func TestNewService(t *testing.T) {
+                tests := []struct {
+                    name    string
+                    svcName string
+                    port    int
+                    wantErr string
+                }{
+                    {"valid", "api", 8080, ""},
+                    {"empty name", "", 8080, "name cannot be empty"},
+                    {"port too low", "api", 0, "invalid port"},
+                    {"port too high", "api", 70000, "invalid port"},
+                    {"negative port", "api", -1, "invalid port"},
+                }
+                for _, tt := range tests {
+                    t.Run(tt.name, func(t *testing.T) {
+                        _, err := NewService(tt.svcName, tt.port)
+                        if tt.wantErr == "" {
+                            if err != nil {
+                                t.Fatalf("unexpected error: %v", err)
+                            }
+                            return
+                        }
+                        if err == nil {
+                            t.Fatal("expected error, got nil")
+                        }
+                        if !strings.Contains(err.Error(), tt.wantErr) {
+                            t.Errorf("error %q should contain %q", err.Error(), tt.wantErr)
+                        }
+                    })
+                }
+            }
+  challenges:
+    - id: challenge_1
+      block: 1
+      difficulty: 2
+      concept: Errors as Values
+      variants:
+        - id: v1
+          title: Config Parser with Errors
+          description: >-
+            Write <code>parseConfig(lines []string) (map[string]string, error)</code>. Each line is
+            <code>"key=value"</code>. Return an error for lines missing <code>=</code>, including the line number in the
+            error message. Skip empty lines.
+          functionSignature: func parseConfig(lines []string) (map[string]string, error)
+          difficulty: 1
+          testCases:
+            - input: parseConfig([]string{"host=localhost", "port=8080"})
+              output: (map[host:localhost port:8080], nil)
+            - input: parseConfig([]string{"host=localhost", "badline"})
+              output: "(nil, \"line 2: missing '='\")"
+          hints:
+            - title: 🤔 Think about it
+              content: Loop with index. Split on first '='. What if a line has no '='?
+            - title: 💡 Hint
+              content: >-
+                Use <code>strings.SplitN(line, "=", 2)</code>. If len(parts) != 2, return <code>fmt.Errorf("line %d:
+                missing '='", i+1)</code>.
+          solution: |-
+            func parseConfig(lines []string) (map[string]string, error) {
+                result := make(map[string]string)
+                for i, line := range lines {
+                    if line == "" {
+                        continue
+                    }
+                    parts := strings.SplitN(line, "=", 2)
+                    if len(parts) != 2 {
+                        return nil, fmt.Errorf("line %d: missing '='", i+1)
+                    }
+                    result[parts[0]] = parts[1]
+                }
+                return result, nil
+            }
+          annotations:
+            - type: idiom
+              label: Fail fast
+              text: Return on first error. Don't try to collect all errors in a simple parser — fail fast, fix, retry.
+            - type: pattern
+              label: Line numbers in errors
+              text: Always include line numbers in parse errors. Users need to know WHERE the error is, not just what.
+        - id: v2
+          title: Multi-Step Pipeline with Errors
+          description: >-
+            Write <code>processMetric(raw string) (Metric, error)</code> where raw is <code>"name|value|labels"</code>.
+            Parse the name (non-empty), value (integer via Atoi), and labels (comma-separated key=value pairs). Wrap
+            errors at each step with context.
+          functionSignature: func processMetric(raw string) (Metric, error)
+          difficulty: 2
+          testCases:
+            - input: processMetric("http_requests|42|method=GET,status=200")
+              output: (Metric{Name:"http_requests", Value:42, Labels:map[method:GET status:200]}, nil)
+            - input: processMetric("|42|a=b")
+              output: "(Metric{}, \"parsing name: name cannot be empty\")"
+            - input: processMetric("foo|abc|a=b")
+              output: "(Metric{}, \"parsing value: ...\")"
+          hints:
+            - title: 🤔 Think about it
+              content: Split on '|' first, then validate each part. Wrap errors with which step failed.
+            - title: 💡 Hint
+              content: >-
+                Split on <code>"|"</code> to get 3 parts. Parse value with <code>strconv.Atoi</code>. Parse labels by
+                splitting on <code>","</code> then <code>"="</code>. Wrap each error: <code>fmt.Errorf("parsing value:
+                %w", err)</code>.
+          solution: |-
+            type Metric struct {
+                Name   string
+                Value  int
+                Labels map[string]string
+            }
+
+            func processMetric(raw string) (Metric, error) {
+                parts := strings.SplitN(raw, "|", 3)
+                if len(parts) != 3 {
+                    return Metric{}, fmt.Errorf("expected 3 fields separated by '|', got %d", len(parts))
+                }
+
+                name := parts[0]
+                if name == "" {
+                    return Metric{}, fmt.Errorf("parsing name: name cannot be empty")
+                }
+
+                value, err := strconv.Atoi(parts[1])
+                if err != nil {
+                    return Metric{}, fmt.Errorf("parsing value: %w", err)
+                }
+
+                labels := make(map[string]string)
+                if parts[2] != "" {
+                    for _, pair := range strings.Split(parts[2], ",") {
+                        kv := strings.SplitN(pair, "=", 2)
+                        if len(kv) != 2 {
+                            return Metric{}, fmt.Errorf("parsing labels: invalid pair %q", pair)
+                        }
+                        labels[kv[0]] = kv[1]
+                    }
+                }
+
+                return Metric{Name: name, Value: value, Labels: labels}, nil
+            }
+          annotations:
+            - type: pattern
+              label: Error context chain
+              text: >-
+                Each step wraps with its own context: 'parsing name:', 'parsing value:', 'parsing labels:'. The caller
+                sees exactly where it failed.
+            - type: interview
+              label: Parse pipeline
+              text: >-
+                Parsing structured text with error handling is a common interview problem. The pattern is always: split,
+                validate each part, wrap errors.
+        - id: v3
+          title: Error Aggregator
+          description: >-
+            Write <code>validateCluster(nodes []Node) error</code>. Check each node: name non-empty, memoryGB > 0,
+            status is "Ready" or "NotReady". Collect ALL errors (don't stop at first). Return a single error listing all
+            problems, or nil if valid. Format: <code>"3 validation errors: node[0]: ...; node[2]: ..."</code>.
+          functionSignature: func validateCluster(nodes []Node) error
+          difficulty: 3
+          testCases:
+            - input: validateCluster([]Node{{"n1",64,"Ready"},{"n2",32,"Ready"}})
+              output: nil
+            - input: validateCluster([]Node{{"",64,"Ready"},{"n2",0,"Ready"},{"n3",32,"Unknown"}})
+              output: >-
+                "3 validation errors: node[0]: name required; node[1]: memory must be positive; node[2]: invalid status
+                \"Unknown\""
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                Collect errors into a slice. At the end, if non-empty, join them into one error. Think about the output
+                format.
+            - title: 💡 Hint
+              content: >-
+                Build <code>var errs []string</code>. For each node, validate and append <code>fmt.Sprintf("node[%d]:
+                %s", i, msg)</code>. At the end: <code>fmt.Errorf("%d validation errors: %s", len(errs),
+                strings.Join(errs, "; "))</code>.
+          solution: |-
+            type Node struct {
+                Name     string
+                MemoryGB int
+                Status   string
+            }
+
+            func validateCluster(nodes []Node) error {
+                var errs []string
+                for i, n := range nodes {
+                    if n.Name == "" {
+                        errs = append(errs, fmt.Sprintf("node[%d]: name required", i))
+                    }
+                    if n.MemoryGB <= 0 {
+                        errs = append(errs, fmt.Sprintf("node[%d]: memory must be positive", i))
+                    }
+                    validStatus := n.Status == "Ready" || n.Status == "NotReady"
+                    if !validStatus {
+                        errs = append(errs, fmt.Sprintf("node[%d]: invalid status %q", i, n.Status))
+                    }
+                }
+                if len(errs) == 0 {
+                    return nil
+                }
+                return fmt.Errorf("%d validation errors: %s", len(errs), strings.Join(errs, "; "))
+            }
+          annotations:
+            - type: pattern
+              label: Error aggregation
+              text: >-
+                Collect all errors instead of stopping at first. This is what K8s admission webhooks do — report
+                everything wrong at once.
+            - type: gotcha
+              label: Return nil explicitly
+              text: >-
+                Return nil, not an empty error. Callers check 'if err != nil' — an empty-message error would still be
+                non-nil.
+            - type: interview
+              label: Validation design
+              text: >-
+                Follow-up: how would you make this return structured errors instead of a string? (Answer: return
+                []ValidationError.)
+    - id: challenge_2
+      block: 2
+      difficulty: 2
+      concept: Sentinel Errors
+      variants:
+        - id: v1
+          title: Pod Store with Sentinels
+          description: >-
+            Implement a <code>PodStore</code> with sentinel errors. Define <code>ErrNotFound</code> and
+            <code>ErrAlreadyExists</code>. Write <code>Add(pod Pod) error</code> (returns ErrAlreadyExists if name is
+            taken) and <code>Get(name string) (Pod, error)</code> (returns ErrNotFound if missing).
+          functionSignature: type PodStore struct { pods map[string]Pod }
+          difficulty: 1
+          testCases:
+            - input: s := NewPodStore(); s.Add(Pod{Name:"web"}); s.Get("web")
+              output: (Pod{Name:"web"}, nil)
+            - input: s := NewPodStore(); s.Get("x")
+              output: (Pod{}, ErrNotFound)
+            - input: s := NewPodStore(); s.Add(Pod{Name:"web"}); s.Add(Pod{Name:"web"})
+              output: ErrAlreadyExists
+          hints:
+            - title: 🤔 Think about it
+              content: The store is a map. Add checks if key exists. Get checks if key is missing.
+            - title: 💡 Hint
+              content: >-
+                Add: <code>if _, ok := s.pods[pod.Name]; ok { return ErrAlreadyExists }</code>. Get: <code>pod, ok :=
+                s.pods[name]; if !ok { return Pod{}, ErrNotFound }</code>.
+          solution: |-
+            var (
+                ErrNotFound      = errors.New("not found")
+                ErrAlreadyExists = errors.New("already exists")
+            )
+
+            type PodStore struct {
+                pods map[string]Pod
+            }
+
+            func NewPodStore() *PodStore {
+                return &PodStore{pods: make(map[string]Pod)}
+            }
+
+            func (s *PodStore) Add(pod Pod) error {
+                if _, ok := s.pods[pod.Name]; ok {
+                    return fmt.Errorf("pod %q: %w", pod.Name, ErrAlreadyExists)
+                }
+                s.pods[pod.Name] = pod
+                return nil
+            }
+
+            func (s *PodStore) Get(name string) (Pod, error) {
+                pod, ok := s.pods[name]
+                if !ok {
+                    return Pod{}, fmt.Errorf("pod %q: %w", name, ErrNotFound)
+                }
+                return pod, nil
+            }
+          annotations:
+            - type: pattern
+              label: Store + sentinels
+              text: >-
+                Sentinel errors let callers distinguish 'not found' from 'something broke'. This is the same pattern as
+                sql.ErrNoRows.
+            - type: idiom
+              label: Wrap sentinels
+              text: Wrap with %w so errors.Is still works, but callers also get context (which pod was missing).
+        - id: v2
+          title: Config Store with Custom Errors
+          description: >-
+            Build a config store with a <code>ConfigError</code> custom type (Key string, Op string —
+            "get"/"set"/"delete", Err error). Implement <code>Set(key, value string) error</code> (error if key is empty
+            or has spaces), <code>Get(key string) (string, error)</code> (wraps ErrNotFound), and <code>Delete(key
+            string) error</code> (wraps ErrNotFound). All errors should be extractable via errors.As.
+          functionSignature: type ConfigStore struct { data map[string]string }
+          difficulty: 2
+          testCases:
+            - input: s := NewConfigStore(); s.Set("host", "localhost"); s.Get("host")
+              output: ("localhost", nil)
+            - input: s := NewConfigStore(); s.Get("missing")
+              output: ("", ConfigError{Key:"missing", Op:"get", Err:ErrNotFound})
+            - input: s := NewConfigStore(); s.Set("", "val")
+              output: ConfigError with Op:"set"
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                ConfigError wraps the underlying error. Callers can use errors.As to get the ConfigError, then errors.Is
+                on its Err field.
+            - title: 💡 Hint
+              content: >-
+                ConfigError needs <code>Error() string</code> and <code>Unwrap() error</code>. Unwrap returns
+                <code>e.Err</code> so errors.Is works through it.
+          solution: |-
+            var ErrNotFound = errors.New("not found")
+
+            type ConfigError struct {
+                Key string
+                Op  string
+                Err error
+            }
+
+            func (e *ConfigError) Error() string {
+                return fmt.Sprintf("%s %q: %v", e.Op, e.Key, e.Err)
+            }
+
+            func (e *ConfigError) Unwrap() error {
+                return e.Err
+            }
+
+            type ConfigStore struct {
+                data map[string]string
+            }
+
+            func NewConfigStore() *ConfigStore {
+                return &ConfigStore{data: make(map[string]string)}
+            }
+
+            func (s *ConfigStore) Set(key, value string) error {
+                if key == "" {
+                    return &ConfigError{Key: key, Op: "set", Err: fmt.Errorf("key cannot be empty")}
+                }
+                if strings.Contains(key, " ") {
+                    return &ConfigError{Key: key, Op: "set", Err: fmt.Errorf("key cannot contain spaces")}
+                }
+                s.data[key] = value
+                return nil
+            }
+
+            func (s *ConfigStore) Get(key string) (string, error) {
+                val, ok := s.data[key]
+                if !ok {
+                    return "", &ConfigError{Key: key, Op: "get", Err: ErrNotFound}
+                }
+                return val, nil
+            }
+
+            func (s *ConfigStore) Delete(key string) error {
+                if _, ok := s.data[key]; !ok {
+                    return &ConfigError{Key: key, Op: "delete", Err: ErrNotFound}
+                }
+                delete(s.data, key)
+                return nil
+            }
+          annotations:
+            - type: idiom
+              label: Unwrap method
+              text: Implementing Unwrap() lets errors.Is and errors.As see through your custom error to the wrapped cause.
+            - type: pattern
+              label: Structured errors
+              text: >-
+                ConfigError carries Op and Key — callers can log structured data, not just a string. This is how
+                os.PathError works.
+            - type: interview
+              label: Error design
+              text: >-
+                Designing error types with Unwrap is a common Go interview topic. Know when to use sentinel vs custom vs
+                wrapping.
+        - id: v3
+          title: Multi-Layer Error Handling
+          description: >-
+            Build three layers: <code>PodStore.Get</code> returns <code>ErrNotFound</code>.
+            <code>PodService.GetPod</code> wraps it with namespace context. <code>APIHandler</code> uses
+            <code>errors.Is</code> to return different status codes: 404 for ErrNotFound, 500 for anything else. Write
+            all three layers and demonstrate the error chain works.
+          functionSignature: func (h *APIHandler) HandleGet(name, namespace string) (int, string)
+          difficulty: 3
+          testCases:
+            - input: h.HandleGet("web", "prod") // web exists
+              output: "(200, \"pod: web\")"
+            - input: h.HandleGet("missing", "prod")
+              output: (404, "not found")
+            - input: h.HandleGet("broken", "prod") // store returns unexpected error
+              output: (500, "internal error")
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                Each layer adds context with %w. The handler at the top uses errors.Is to make decisions. The original
+                sentinel survives all the wrapping.
+            - title: 💡 Hint
+              content: >-
+                Store: <code>return fmt.Errorf("store: %w", ErrNotFound)</code>. Service: <code>return fmt.Errorf("pod
+                %s/%s: %w", ns, name, err)</code>. Handler: <code>if errors.Is(err, ErrNotFound) { return 404, ...
+                }</code>.
+          solution: |-
+            var ErrNotFound = errors.New("not found")
+
+            type PodStore struct {
+                pods map[string]Pod
+            }
+
+            func (s *PodStore) Get(name string) (Pod, error) {
+                pod, ok := s.pods[name]
+                if !ok {
+                    return Pod{}, fmt.Errorf("store get %q: %w", name, ErrNotFound)
+                }
+                return pod, nil
+            }
+
+            type PodService struct {
+                store *PodStore
+            }
+
+            func (svc *PodService) GetPod(name, namespace string) (Pod, error) {
+                pod, err := svc.store.Get(name)
+                if err != nil {
+                    return Pod{}, fmt.Errorf("pod %s/%s: %w", namespace, name, err)
+                }
+                return pod, nil
+            }
+
+            type APIHandler struct {
+                service *PodService
+            }
+
+            func (h *APIHandler) HandleGet(name, namespace string) (int, string) {
+                pod, err := h.service.GetPod(name, namespace)
+                if err != nil {
+                    if errors.Is(err, ErrNotFound) {
+                        return 404, "not found"
+                    }
+                    return 500, "internal error"
+                }
+                return 200, fmt.Sprintf("pod: %s", pod.Name)
+            }
+          annotations:
+            - type: pattern
+              label: Error propagation layers
+              text: >-
+                Store → Service → Handler. Each layer wraps, the handler makes decisions. This is how real Go APIs
+                handle errors.
+            - type: idiom
+              label: errors.Is through wrapping
+              text: ErrNotFound survives two layers of wrapping because both use %w. errors.Is unwraps the entire chain.
+            - type: interview
+              label: API error handling
+              text: This pattern (sentinel → wrapping → status codes) is asked in every Go backend interview. Know it cold.
+    - id: challenge_3
+      block: 3
+      difficulty: 2
+      concept: Table-Driven Tests
+      variants:
+        - id: v1
+          title: Test a Label Parser
+          description: >-
+            Write a table-driven test for <code>parseLabels(s string) (map[string]string, error)</code> which parses
+            <code>"app=web,env=prod"</code> into a map. Test cases: valid single label, valid multiple, empty string
+            (returns empty map), missing value (<code>"app="</code> is valid), missing equals (error), and trailing
+            comma (error).
+          functionSignature: func TestParseLabels(t *testing.T)
+          difficulty: 1
+          testCases:
+            - input: parseLabels("app=web,env=prod")
+              output: map[app:web env:prod]
+            - input: parseLabels("broken")
+              output: error
+          hints:
+            - title: 🤔 Think about it
+              content: What's your test struct? You need input, expected output (map), and error expectation.
+            - title: 💡 Hint
+              content: >-
+                Use <code>wantErr bool</code> and <code>want map[string]string</code> in the struct. Compare maps with
+                <code>reflect.DeepEqual</code> or manual key-by-key comparison.
+          solution: |-
+            func TestParseLabels(t *testing.T) {
+                tests := []struct {
+                    name    string
+                    input   string
+                    want    map[string]string
+                    wantErr bool
+                }{
+                    {"single label", "app=web", map[string]string{"app": "web"}, false},
+                    {"multiple", "app=web,env=prod", map[string]string{"app": "web", "env": "prod"}, false},
+                    {"empty string", "", map[string]string{}, false},
+                    {"empty value", "app=", map[string]string{"app": ""}, false},
+                    {"missing equals", "broken", nil, true},
+                    {"trailing comma", "app=web,", nil, true},
+                }
+                for _, tt := range tests {
+                    t.Run(tt.name, func(t *testing.T) {
+                        got, err := parseLabels(tt.input)
+                        if tt.wantErr {
+                            if err == nil {
+                                t.Error("expected error")
+                            }
+                            return
+                        }
+                        if err != nil {
+                            t.Fatalf("unexpected error: %v", err)
+                        }
+                        if !reflect.DeepEqual(got, tt.want) {
+                            t.Errorf("got %v, want %v", got, tt.want)
+                        }
+                    })
+                }
+            }
+          annotations:
+            - type: idiom
+              label: reflect.DeepEqual
+              text: >-
+                For comparing maps and slices in tests, reflect.DeepEqual is the standard approach. In production code,
+                avoid reflect.
+            - type: pattern
+              label: Table tests
+              text: >-
+                6 test cases, one loop. Adding a new edge case is one line. This is why table-driven tests are the Go
+                default.
+        - id: v2
+          title: Test a Resource Validator
+          description: >-
+            Write a table-driven test for <code>validateResource(name string, memMB, cpuM int) error</code>. Test: valid
+            resource, empty name, name too long (>63 chars), zero memory, negative CPU, and boundary values (1 mem, 1
+            cpu). Use <code>wantErr string</code> to verify error messages.
+          functionSignature: func TestValidateResource(t *testing.T)
+          difficulty: 2
+          testCases:
+            - input: validateResource("web", 512, 250)
+              output: nil
+            - input: validateResource("", 512, 250)
+              output: "\"name is required\""
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                You want to verify not just that errors occur, but that the error message is correct. Use
+                strings.Contains.
+            - title: 💡 Hint
+              content: >-
+                Struct: <code>{ name, resName string; memMB, cpuM int; wantErr string }</code>. If wantErr is empty,
+                expect nil. Otherwise, check <code>strings.Contains(err.Error(), tt.wantErr)</code>.
+          solution: |-
+            func TestValidateResource(t *testing.T) {
+                tests := []struct {
+                    name    string
+                    resName string
+                    memMB   int
+                    cpuM    int
+                    wantErr string
+                }{
+                    {"valid", "web-1", 512, 250, ""},
+                    {"min values", "x", 1, 1, ""},
+                    {"empty name", "", 512, 250, "name is required"},
+                    {"name too long", strings.Repeat("a", 64), 512, 250, "name too long"},
+                    {"zero memory", "web", 0, 250, "memory must be positive"},
+                    {"negative cpu", "web", 512, -1, "CPU must be positive"},
+                }
+                for _, tt := range tests {
+                    t.Run(tt.name, func(t *testing.T) {
+                        err := validateResource(tt.resName, tt.memMB, tt.cpuM)
+                        if tt.wantErr == "" {
+                            if err != nil {
+                                t.Fatalf("unexpected error: %v", err)
+                            }
+                            return
+                        }
+                        if err == nil {
+                            t.Fatal("expected error, got nil")
+                        }
+                        if !strings.Contains(err.Error(), tt.wantErr) {
+                            t.Errorf("error %q should contain %q", err.Error(), tt.wantErr)
+                        }
+                    })
+                }
+            }
+          annotations:
+            - type: pattern
+              label: Error message testing
+              text: >-
+                Use strings.Contains, not exact match. Error messages change — checking for key phrases is more
+                resilient.
+            - type: gotcha
+              label: Boundary values
+              text: "Always test boundaries: 0, 1, max, max+1. Most bugs live at boundaries."
+        - id: v3
+          title: Test Sentinel Error Chain
+          description: >-
+            Write a table-driven test for a <code>PodStore</code> that uses sentinel errors. Test <code>Get</code> and
+            <code>Add</code> methods. Verify: (1) success cases return correct data, (2) error cases return the right
+            sentinel via <code>errors.Is</code>, (3) error messages contain context (pod name). Include setup steps in
+            each test case.
+          functionSignature: func TestPodStore(t *testing.T)
+          difficulty: 3
+          testCases:
+            - input: // Get existing pod
+              output: returns pod, no error
+            - input: // Get missing pod
+              output: errors.Is(err, ErrNotFound) == true
+            - input: // Add duplicate pod
+              output: errors.Is(err, ErrAlreadyExists) == true
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                Each test case needs its own store setup. Some tests need pre-populated data. Use a setup function in
+                the test struct.
+            - title: 💡 Hint
+              content: >-
+                Add a <code>setup func(*PodStore)</code> field to populate the store before each test. Check sentinels
+                with <code>errors.Is</code> and messages with <code>strings.Contains</code>.
+          solution: |-
+            func TestPodStore(t *testing.T) {
+                tests := []struct {
+                    name      string
+                    setup     func(*PodStore)
+                    action    func(*PodStore) error
+                    wantErr   error  // sentinel to check with errors.Is
+                    wantInMsg string // substring in error message
+                }{
+                    {
+                        name:   "get existing",
+                        setup:  func(s *PodStore) { s.Add(Pod{Name: "web-1"}) },
+                        action: func(s *PodStore) error { _, err := s.Get("web-1"); return err },
+                    },
+                    {
+                        name:      "get missing",
+                        setup:     func(s *PodStore) {},
+                        action:    func(s *PodStore) error { _, err := s.Get("web-1"); return err },
+                        wantErr:   ErrNotFound,
+                        wantInMsg: "web-1",
+                    },
+                    {
+                        name:      "add duplicate",
+                        setup:     func(s *PodStore) { s.Add(Pod{Name: "web-1"}) },
+                        action:    func(s *PodStore) error { return s.Add(Pod{Name: "web-1"}) },
+                        wantErr:   ErrAlreadyExists,
+                        wantInMsg: "web-1",
+                    },
+                    {
+                        name:   "add then get",
+                        setup:  func(s *PodStore) {},
+                        action: func(s *PodStore) error { s.Add(Pod{Name: "db-1"}); _, err := s.Get("db-1"); return err },
+                    },
+                }
+                for _, tt := range tests {
+                    t.Run(tt.name, func(t *testing.T) {
+                        store := NewPodStore()
+                        tt.setup(store)
+                        err := tt.action(store)
+
+                        if tt.wantErr == nil {
+                            if err != nil {
+                                t.Fatalf("unexpected error: %v", err)
+                            }
+                            return
+                        }
+                        if err == nil {
+                            t.Fatal("expected error, got nil")
+                        }
+                        if !errors.Is(err, tt.wantErr) {
+                            t.Errorf("expected %v, got %v", tt.wantErr, err)
+                        }
+                        if tt.wantInMsg != "" && !strings.Contains(err.Error(), tt.wantInMsg) {
+                            t.Errorf("error %q should contain %q", err.Error(), tt.wantInMsg)
+                        }
+                    })
+                }
+            }
+          annotations:
+            - type: pattern
+              label: Setup + action pattern
+              text: >-
+                Each test case has its own setup and action. This keeps tests independent and makes it clear what each
+                test is checking.
+            - type: idiom
+              label: errors.Is in tests
+              text: >-
+                Test sentinels with errors.Is, not string comparison. This verifies the error chain is correct even if
+                wrapping adds context.
+            - type: interview
+              label: Testing patterns
+              text: >-
+                Table-driven tests with setup/action closures is advanced Go testing. Interviewers love seeing this
+                level of testing sophistication.
+    - id: challenge_4
+      block: 4
+      difficulty: 2
+      concept: Testing Infra Code
+      variants:
+        - id: v1
+          title: Test a Config Linter
+          description: >-
+            Write table-driven tests for <code>lintConfig(entries []ConfigEntry) []LintError</code>. Each LintError has
+            Key and Message. Test: all valid entries (no errors), duplicate keys, empty values, and keys with invalid
+            characters. Verify both the count and content of returned errors.
+          functionSignature: func TestLintConfig(t *testing.T)
+          difficulty: 1
+          testCases:
+            - input: lintConfig([]ConfigEntry{{"host","localhost"},{"port","8080"}})
+              output: nil (no errors)
+            - input: lintConfig([]ConfigEntry{{"host","a"},{"host","b"}})
+              output: "[]LintError{{Key:\"host\", Message:\"duplicate key\"}}"
+          hints:
+            - title: 🤔 Think about it
+              content: How do you compare slices of structs in tests? You need to check count and content.
+            - title: 💡 Hint
+              content: >-
+                Use <code>wantCount int</code> and <code>wantKeys []string</code> in the test struct. Check
+                <code>len(got) == tt.wantCount</code>, then verify each error's Key.
+          solution: |-
+            func TestLintConfig(t *testing.T) {
+                tests := []struct {
+                    name      string
+                    entries   []ConfigEntry
+                    wantCount int
+                    wantKeys  []string
+                }{
+                    {
+                        name:      "all valid",
+                        entries:   []ConfigEntry{{"host", "localhost"}, {"port", "8080"}},
+                        wantCount: 0,
+                    },
+                    {
+                        name:      "duplicate keys",
+                        entries:   []ConfigEntry{{"host", "a"}, {"host", "b"}},
+                        wantCount: 1,
+                        wantKeys:  []string{"host"},
+                    },
+                    {
+                        name:      "empty value",
+                        entries:   []ConfigEntry{{"host", ""}},
+                        wantCount: 1,
+                        wantKeys:  []string{"host"},
+                    },
+                    {
+                        name:      "multiple errors",
+                        entries:   []ConfigEntry{{"host", ""}, {"host", "b"}, {"bad key", "val"}},
+                        wantCount: 3,
+                    },
+                }
+                for _, tt := range tests {
+                    t.Run(tt.name, func(t *testing.T) {
+                        got := lintConfig(tt.entries)
+                        if len(got) != tt.wantCount {
+                            t.Fatalf("got %d errors, want %d: %v", len(got), tt.wantCount, got)
+                        }
+                        for i, key := range tt.wantKeys {
+                            if got[i].Key != key {
+                                t.Errorf("error[%d].Key = %q, want %q", i, got[i].Key, key)
+                            }
+                        }
+                    })
+                }
+            }
+          annotations:
+            - type: pattern
+              label: Structured error testing
+              text: >-
+                Test both count and content of errors. Count catches missing/extra errors, content catches wrong error
+                details.
+            - type: idiom
+              label: t.Fatalf on count
+              text: >-
+                Use Fatalf for count mismatch — if the count is wrong, checking individual errors will panic on
+                index-out-of-range.
+        - id: v2
+          title: Test a Metric Parser
+          description: >-
+            Write comprehensive table-driven tests for <code>parseMetricLine(line string) (Metric, error)</code> which
+            parses Prometheus-style lines like <code>http_requests_total{method="GET"} 42</code>. Test: valid line with
+            labels, valid line without labels, missing value, invalid value (not a number), malformed labels, and empty
+            line.
+          functionSignature: func TestParseMetricLine(t *testing.T)
+          difficulty: 2
+          testCases:
+            - input: parseMetricLine("http_requests{method=\"GET\"} 42")
+              output: Metric{Name:"http_requests", Value:42, Labels:{"method":"GET"}}
+            - input: parseMetricLine("")
+              output: error
+          hints:
+            - title: 🤔 Think about it
+              content: >-
+                You need to test the happy path AND every way parsing can fail. Each failure mode should have its own
+                test case.
+            - title: 💡 Hint
+              content: >-
+                Struct: <code>{ name, input string; wantName string; wantValue int; wantLabels map[string]string;
+                wantErr bool }</code>. For success cases, check all three fields.
+          solution: |-
+            func TestParseMetricLine(t *testing.T) {
+                tests := []struct {
+                    name       string
+                    input      string
+                    wantName   string
+                    wantValue  int
+                    wantLabels map[string]string
+                    wantErr    bool
+                }{
+                    {
+                        name:       "with labels",
+                        input:      `http_requests{method="GET",status="200"} 42`,
+                        wantName:   "http_requests",
+                        wantValue:  42,
+                        wantLabels: map[string]string{"method": "GET", "status": "200"},
+                    },
+                    {
+                        name:       "no labels",
+                        input:      "go_goroutines 17",
+                        wantName:   "go_goroutines",
+                        wantValue:  17,
+                        wantLabels: map[string]string{},
+                    },
+                    {name: "empty line", input: "", wantErr: true},
+                    {name: "missing value", input: "http_requests{}", wantErr: true},
+                    {name: "non-numeric value", input: "metric 3.14", wantErr: true},
+                    {name: "malformed labels", input: "metric{broken 42", wantErr: true},
+                }
+                for _, tt := range tests {
+                    t.Run(tt.name, func(t *testing.T) {
+                        got, err := parseMetricLine(tt.input)
+                        if tt.wantErr {
+                            if err == nil {
+                                t.Error("expected error")
+                            }
+                            return
+                        }
+                        if err != nil {
+                            t.Fatalf("unexpected error: %v", err)
+                        }
+                        if got.Name != tt.wantName {
+                            t.Errorf("name: got %q, want %q", got.Name, tt.wantName)
+                        }
+                        if got.Value != tt.wantValue {
+                            t.Errorf("value: got %d, want %d", got.Value, tt.wantValue)
+                        }
+                        if !reflect.DeepEqual(got.Labels, tt.wantLabels) {
+                            t.Errorf("labels: got %v, want %v", got.Labels, tt.wantLabels)
+                        }
+                    })
+                }
+            }
+          annotations:
+            - type: pattern
+              label: Multi-field verification
+              text: >-
+                Check every field of the result, not just one. Partial failures (correct name, wrong value) are common
+                bugs.
+            - type: gotcha
+              label: Float values
+              text: >-
+                We test that '3.14' is an error because Atoi doesn't handle floats. Real Prometheus uses float64 — a
+                good follow-up exercise.
+        - id: v3
+          title: Integration-Style Test
+          description: >-
+            Write a test that exercises a full workflow: create a <code>PodStore</code>, add 5 pods, verify counts, get
+            each pod, delete one, verify it's gone (ErrNotFound), and verify the remaining count. Use subtests
+            (<code>t.Run</code>) for each phase: setup, verify-add, verify-get, verify-delete.
+          functionSignature: func TestPodStoreIntegration(t *testing.T)
+          difficulty: 3
+          testCases:
+            - input: // Full lifecycle test
+              output: All phases pass
+          hints:
+            - title: 🤔 Think about it
+              content: This is NOT table-driven — it's a sequence of steps. Use t.Run for logical phases so failures are clear.
+            - title: 💡 Hint
+              content: >-
+                Phase 1: Add pods in a loop. Phase 2: <code>store.Count() == 5</code>. Phase 3: Get each, verify name.
+                Phase 4: Delete one, verify ErrNotFound on re-get. Phase 5: <code>store.Count() == 4</code>.
+          solution: |-
+            func TestPodStoreIntegration(t *testing.T) {
+                store := NewPodStore()
+                pods := []string{"web-1", "web-2", "api-1", "db-1", "cache-1"}
+
+                t.Run("add pods", func(t *testing.T) {
+                    for _, name := range pods {
+                        err := store.Add(Pod{Name: name})
+                        if err != nil {
+                            t.Fatalf("adding %s: %v", name, err)
+                        }
+                    }
+                })
+
+                t.Run("verify count", func(t *testing.T) {
+                    if got := store.Count(); got != 5 {
+                        t.Errorf("count = %d, want 5", got)
+                    }
+                })
+
+                t.Run("get each pod", func(t *testing.T) {
+                    for _, name := range pods {
+                        pod, err := store.Get(name)
+                        if err != nil {
+                            t.Errorf("getting %s: %v", name, err)
+                            continue
+                        }
+                        if pod.Name != name {
+                            t.Errorf("got name %q, want %q", pod.Name, name)
+                        }
+                    }
+                })
+
+                t.Run("delete and verify", func(t *testing.T) {
+                    err := store.Delete("web-2")
+                    if err != nil {
+                        t.Fatalf("deleting web-2: %v", err)
+                    }
+                    _, err = store.Get("web-2")
+                    if !errors.Is(err, ErrNotFound) {
+                        t.Errorf("expected ErrNotFound after delete, got %v", err)
+                    }
+                })
+
+                t.Run("final count", func(t *testing.T) {
+                    if got := store.Count(); got != 4 {
+                        t.Errorf("count = %d, want 4", got)
+                    }
+                })
+            }
+          annotations:
+            - type: pattern
+              label: Phase-based testing
+              text: >-
+                Subtests as phases make failures obvious: 'TestPodStoreIntegration/delete_and_verify FAIL'. You know
+                exactly which phase broke.
+            - type: idiom
+              label: t.Fatalf vs t.Errorf
+              text: >-
+                Fatal in setup phases (if add fails, nothing else matters). Error in verification phases (collect all
+                failures).
+            - type: interview
+              label: Testing strategy
+              text: >-
+                Integration tests prove the system works end-to-end. Combine with unit tests (table-driven) for thorough
+                coverage.

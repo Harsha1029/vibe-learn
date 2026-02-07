@@ -3,6 +3,7 @@ course:
   slug: go-course
   description: "Interactive Go programming course with 22 modules covering fundamentals, CLI tools, concurrency, testing, algorithms, and capstone projects."
   storagePrefix: go-course
+  hidden: true
 
 tracks:
   - title: Foundation
